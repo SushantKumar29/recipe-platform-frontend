@@ -7,6 +7,7 @@ This repository contains the frontend application for the Recipe Sharing Platfor
 - Vite + React – Fast development and optimized builds
 - TypeScript – Static typing for better maintainability
 - React Router – Client-side routing
+- Redux Toolkit – State management
 - Tailwind CSS – Utility-first styling
 - shadcn/ui – Accessible and reusable UI components
 - Axios – HTTP client for API communication
