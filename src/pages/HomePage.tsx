@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
+import { PlusIcon } from "lucide-react";
 
 import RecipesNotFound from "@/components/RecipesNotFound";
 import RateLimitedUI from "@/components/RateLimitedUI";
@@ -8,6 +9,8 @@ import RecipeCard from "@/components/RecipeCard";
 import Loader from "@/components/shared/Loader";
 import type { RootState, AppDispatch } from "@/app/store";
 import { fetchRecipes } from "@/slices/recipes/recipeThunks";
+import { Link } from "react-router";
+import { Button } from "@/components/ui/button";
 
 const HomePage = () => {
 	const dispatch = useDispatch<AppDispatch>();
@@ -15,6 +18,7 @@ const HomePage = () => {
 	const { items, loading, isRateLimited, pagination } = useSelector(
 		(state: RootState) => state.recipes,
 	);
+	const { isAuthenticated } = useSelector((state: RootState) => state.auth);
 
 	useEffect(() => {
 		dispatch(fetchRecipes())
@@ -31,6 +35,16 @@ const HomePage = () => {
 			{isRateLimited && <RateLimitedUI />}
 
 			<div className='max-w-7xl mx-auto p-4 mt-6'>
+				{isAuthenticated && (
+					<div className='flex justify-end items-center gap-4'>
+						<Link to={"/new-recipe"} className='btn btn-primary'>
+							<Button className='cursor-pointer'>
+								<PlusIcon className='size-5' />
+								<span>New Recipe</span>
+							</Button>
+						</Link>
+					</div>
+				)}
 				{!isRateLimited && items.length === 0 && <RecipesNotFound />}
 
 				{!isRateLimited && items.length > 0 && (

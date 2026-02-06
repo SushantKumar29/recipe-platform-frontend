@@ -1,9 +1,20 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { Recipe, RecipeDetail } from "./recipeTypes";
+import type { Comment } from "@/types/comments/commentTypes";
 
 interface RecipeState {
 	items: Recipe[];
 	selectedRecipe: RecipeDetail | null;
+	comments: Comment[];
+	commentsLoading: boolean;
+	commentsPagination: {
+		page: number;
+		totalPages: number;
+		totalComments: number;
+		hasNext: boolean;
+		hasPrev: boolean;
+		limit: number;
+	} | null;
 	loading: boolean;
 	isRateLimited: boolean;
 	pagination: {
@@ -17,6 +28,9 @@ interface RecipeState {
 const initialState: RecipeState = {
 	items: [],
 	selectedRecipe: null,
+	comments: [],
+	commentsLoading: false,
+	commentsPagination: null,
 	loading: false,
 	isRateLimited: false,
 	pagination: null,
@@ -30,6 +44,18 @@ interface SetRecipesPayload {
 		total: number;
 		pages: number;
 	} | null;
+}
+
+interface SetCommentsPayload {
+	comments: Comment[];
+	pagination: {
+		page: number;
+		totalPages: number;
+		totalComments: number;
+		hasNext: boolean;
+		hasPrev: boolean;
+		limit: number;
+	};
 }
 
 const recipeSlice = createSlice({
@@ -58,6 +84,29 @@ const recipeSlice = createSlice({
 		},
 		clearSelectedRecipe(state) {
 			state.selectedRecipe = null;
+			state.comments = [];
+			state.commentsPagination = null;
+		},
+		fetchCommentsStart(state) {
+			state.commentsLoading = true;
+		},
+		setComments(state, action: PayloadAction<SetCommentsPayload>) {
+			state.comments = action.payload.comments;
+			state.commentsPagination = action.payload.pagination;
+			state.commentsLoading = false;
+		},
+		addComment(state, action: PayloadAction<Comment>) {
+			state.comments.unshift(action.payload);
+			if (state.commentsPagination) {
+				state.commentsPagination.totalComments += 1;
+			}
+		},
+		fetchCommentsError(state) {
+			state.commentsLoading = false;
+		},
+		clearComments(state) {
+			state.comments = [];
+			state.commentsPagination = null;
 		},
 	},
 });
@@ -69,6 +118,11 @@ export const {
 	fetchError,
 	rateLimited,
 	clearSelectedRecipe,
+	fetchCommentsStart,
+	setComments,
+	addComment,
+	fetchCommentsError,
+	clearComments,
 } = recipeSlice.actions;
 
 export default recipeSlice.reducer;

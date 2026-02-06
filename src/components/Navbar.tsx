@@ -1,4 +1,3 @@
-import { PlusIcon } from "lucide-react";
 import { Link } from "react-router";
 import { Button } from "./ui/button";
 import { useDispatch, useSelector } from "react-redux";
@@ -21,15 +20,7 @@ const Navbar = () => {
 						</Link>
 					</h1>
 					{isAuthenticated ? (
-						<div className='flex gap-4'>
-							<div className='flex items-center gap-4'>
-								<Link to={"/new-recipe"} className='btn btn-primary'>
-									<Button className='cursor-pointer'>
-										<PlusIcon className='size-5' />
-										<span>New Recipe</span>
-									</Button>
-								</Link>
-							</div>
+						<div className='flex gap-4 items-center'>
 							<span>{user?.name}</span>
 							<Button onClick={() => dispatch(logout())}>Logout</Button>
 						</div>

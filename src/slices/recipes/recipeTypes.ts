@@ -1,21 +1,8 @@
-export interface User {
-	_id: string;
-	name: string;
-	email: string;
-}
+import type { User } from "@/types/users/userTypes";
 
 export interface Rating {
 	_id: string;
 	value: number;
-	author: User;
-	recipe: string;
-	createdAt: string;
-	updatedAt: string;
-}
-
-export interface Comment {
-	_id: string;
-	content: string;
 	author: User;
 	recipe: string;
 	createdAt: string;
@@ -27,7 +14,7 @@ export interface Recipe {
 	title: string;
 	ingredients: string;
 	steps: string;
-	image?: string;
+	image?: string | { url: string; publicId: string };
 	author: string | User;
 	isPublished: boolean;
 	createdAt: string;
@@ -38,7 +25,6 @@ export interface Recipe {
 }
 
 export interface RecipeDetail extends Recipe {
-	comments: Comment[];
 	ratings: Rating[];
 	id?: string;
 }
