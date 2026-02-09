@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
+import { Star } from "lucide-react";
 
 import RateLimitedUI from "@/components/RateLimitedUI";
 import Loader from "@/components/shared/Loader";
@@ -11,17 +12,24 @@ import {
 	fetchRecipeById,
 	fetchRecipeComments,
 	addNewComment,
+	rateRecipe,
 } from "@/slices/recipes/recipeThunks";
 import {
 	clearSelectedRecipe,
 	clearComments,
+	updateRecipeRating,
+	setUserRating,
+	setRatingError,
+	clearUserRating,
 } from "@/slices/recipes/recipeSlice";
 import type { RootState, AppDispatch } from "@/app/store";
 
 const RecipePage = () => {
+	const [commentPage, setCommentPage] = useState(1);
+	const [hoverRating, setHoverRating] = useState<number | null>(null);
+
 	const { id } = useParams<{ id: string }>();
 	const dispatch = useDispatch<AppDispatch>();
-	const [commentPage, setCommentPage] = useState(1);
 
 	const {
 		selectedRecipe,
@@ -30,7 +38,12 @@ const RecipePage = () => {
 		comments,
 		commentsLoading,
 		commentsPagination,
+		ratingLoading,
+		ratingError,
+		userRating,
 	} = useSelector((state: RootState) => state.recipes);
+
+	const { isAuthenticated } = useSelector((state: RootState) => state.auth);
 
 	useEffect(() => {
 		if (id) {
@@ -50,8 +63,27 @@ const RecipePage = () => {
 		return () => {
 			dispatch(clearSelectedRecipe());
 			dispatch(clearComments());
+			dispatch(clearUserRating());
 		};
 	}, [dispatch, id, commentPage]);
+
+	useEffect(() => {
+		if (selectedRecipe && selectedRecipe.userRating && id) {
+			dispatch(
+				setUserRating({
+					recipeId: id,
+					value: selectedRecipe.userRating,
+				}),
+			);
+		}
+	}, [selectedRecipe, id, dispatch]);
+
+	useEffect(() => {
+		if (ratingError) {
+			toast.error(ratingError);
+			dispatch(setRatingError(null));
+		}
+	}, [ratingError, dispatch]);
 
 	const handleAddComment = async (content: string) => {
 		if (!id) return;
@@ -67,6 +99,40 @@ const RecipePage = () => {
 	const handleLoadMoreComments = () => {
 		if (commentsPagination?.hasNext && id) {
 			setCommentPage((prev) => prev + 1);
+		}
+	};
+
+	const handleRateRecipe = async (value: number) => {
+		if (!id || !isAuthenticated) {
+			toast.error("Please login to rate this recipe");
+			return;
+		}
+
+		if (value < 1 || value > 5) {
+			toast.error("Rating must be between 1 and 5");
+			return;
+		}
+
+		dispatch(setUserRating({ recipeId: id, value }));
+
+		try {
+			const response = await dispatch(
+				rateRecipe({ recipeId: id, value }),
+			).unwrap();
+
+			if (selectedRecipe) {
+				dispatch(
+					updateRecipeRating({
+						averageRating: response.averageRating,
+						ratingCount: response.ratingCount,
+					}),
+				);
+			}
+
+			toast.success("Recipe rated successfully!");
+		} catch (error: any) {
+			dispatch(clearUserRating());
+			toast.error(error);
 		}
 	};
 
@@ -92,6 +158,16 @@ const RecipePage = () => {
 		}
 
 		return "A";
+	};
+
+	const getCurrentRating = () => {
+		if (hoverRating !== null) return hoverRating;
+		if (userRating && userRating.recipeId === id) return userRating.value;
+		return selectedRecipe?.averageRating || 0;
+	};
+
+	const hasUserRated = () => {
+		return userRating && userRating.recipeId === id;
 	};
 
 	if (loading) return <Loader />;
@@ -126,17 +202,85 @@ const RecipePage = () => {
 							: `User ${selectedRecipe.author?.substring(0, 8)}...`}
 					</div>
 
-					{selectedRecipe.ratingCount > 0 && (
-						<div className='mb-4 flex items-center gap-2'>
-							<span className='text-yellow-500 font-bold'>
-								★ {selectedRecipe.averageRating.toFixed(1)}
-							</span>
-							<span className='text-gray-500 text-sm'>
-								({selectedRecipe.ratingCount}{" "}
-								{selectedRecipe.ratingCount === 1 ? "rating" : "ratings"})
-							</span>
+					<div className='mb-6'>
+						<div className='flex items-center gap-4'>
+							<div className='flex items-center gap-2'>
+								<div className='flex'>
+									{[1, 2, 3, 4, 5].map((star) => {
+										const currentRating = getCurrentRating();
+										const isFilled = star <= currentRating;
+										const isUserRating =
+											hasUserRated() && userRating?.value === star;
+
+										return (
+											<button
+												key={star}
+												type='button'
+												onClick={() => handleRateRecipe(star)}
+												onMouseEnter={() => setHoverRating(star)}
+												onMouseLeave={() => setHoverRating(null)}
+												disabled={!isAuthenticated || ratingLoading}
+												className={`p-1 transition-all duration-200 ${
+													!isAuthenticated
+														? "cursor-not-allowed"
+														: "cursor-pointer hover:scale-110"
+												} ${ratingLoading ? "opacity-50" : ""}`}
+												aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
+											>
+												<Star
+													size={28}
+													className={`
+														${
+															isFilled
+																? isUserRating
+																	? "fill-blue-500 text-blue-500"
+																	: "fill-yellow-500 text-yellow-500"
+																: "text-gray-300"
+														}
+														transition-colors duration-200
+													`}
+												/>
+											</button>
+										);
+									})}
+								</div>
+
+								<div className='flex flex-col'>
+									<div className='flex items-center gap-2'>
+										<span className='text-yellow-500 font-bold text-lg'>
+											★ {selectedRecipe.averageRating?.toFixed(1) || "0.0"}
+										</span>
+										<span className='text-gray-500 text-sm'>
+											({selectedRecipe.ratingCount || 0}{" "}
+											{selectedRecipe.ratingCount === 1 ? "rating" : "ratings"})
+										</span>
+									</div>
+
+									{isAuthenticated && (
+										<p className='text-xs text-gray-500 mt-1'>
+											{hasUserRated()
+												? `You rated this ${userRating!.value} star${userRating!.value > 1 ? "s" : ""}`
+												: ""}
+										</p>
+									)}
+									{!isAuthenticated && (
+										<p className='text-xs text-gray-500 mt-1'>
+											Login to rate this recipe
+										</p>
+									)}
+								</div>
+							</div>
 						</div>
-					)}
+
+						{ratingLoading && (
+							<div className='mt-2 flex items-center gap-2'>
+								<div className='h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600' />
+								<span className='text-sm text-gray-600'>
+									Submitting rating...
+								</span>
+							</div>
+						)}
+					</div>
 
 					<div className='mb-6'>
 						<h3 className='text-lg font-semibold text-gray-900 mb-2'>
@@ -161,9 +305,11 @@ const RecipePage = () => {
 							Comments ({commentsPagination?.totalComments || 0})
 						</h3>
 
-						<div className='mb-6'>
-							<CommentForm onSubmit={handleAddComment} />
-						</div>
+						{isAuthenticated && (
+							<div className='mb-6'>
+								<CommentForm onSubmit={handleAddComment} />
+							</div>
+						)}
 
 						{commentsLoading && commentPage === 1 ? (
 							<Loader />

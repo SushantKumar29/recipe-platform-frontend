@@ -22,11 +22,15 @@ export interface Recipe {
 	__v?: number;
 	ratingCount: number;
 	averageRating: number;
+	preparationTime: number;
 }
 
 export interface RecipeDetail extends Recipe {
 	ratings: Rating[];
 	id?: string;
+	averageRating: number;
+	ratingCount: number;
+	userRating?: number;
 }
 
 export interface RecipesResponse {
@@ -37,4 +41,13 @@ export interface RecipesResponse {
 		total: number;
 		pages: number;
 	};
+}
+
+export interface RecipeFilters {
+	search: string;
+	preparationTime: string;
+	minRating: string;
+	sortBy: string;
+	sortOrder: string;
+	authorId?: string;
 }

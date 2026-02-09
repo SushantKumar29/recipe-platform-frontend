@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type { Recipe, RecipeDetail } from "./recipeTypes";
+import type { Recipe, RecipeDetail } from "../../types/recipes/recipeTypes";
 import type { Comment } from "@/types/comments/commentTypes";
 
 interface RecipeState {
@@ -23,6 +23,12 @@ interface RecipeState {
 		total: number;
 		pages: number;
 	} | null;
+	ratingLoading: boolean;
+	ratingError: string | null;
+	userRating: {
+		recipeId: string;
+		value: number;
+	} | null;
 }
 
 const initialState: RecipeState = {
@@ -34,6 +40,9 @@ const initialState: RecipeState = {
 	loading: false,
 	isRateLimited: false,
 	pagination: null,
+	ratingLoading: false,
+	ratingError: null,
+	userRating: null,
 };
 
 interface SetRecipesPayload {
@@ -75,6 +84,21 @@ const recipeSlice = createSlice({
 			state.selectedRecipe = action.payload;
 			state.loading = false;
 		},
+		updateRecipeRating(
+			state,
+			action: PayloadAction<{ averageRating: number; ratingCount: number }>,
+		) {
+			if (state.selectedRecipe) {
+				state.selectedRecipe.averageRating = action.payload.averageRating;
+				state.selectedRecipe.ratingCount = action.payload.ratingCount;
+			}
+		},
+		setUserRating(
+			state,
+			action: PayloadAction<{ recipeId: string; value: number } | null>,
+		) {
+			state.userRating = action.payload;
+		},
 		fetchError(state) {
 			state.loading = false;
 		},
@@ -86,6 +110,7 @@ const recipeSlice = createSlice({
 			state.selectedRecipe = null;
 			state.comments = [];
 			state.commentsPagination = null;
+			state.userRating = null;
 		},
 		fetchCommentsStart(state) {
 			state.commentsLoading = true;
@@ -108,6 +133,18 @@ const recipeSlice = createSlice({
 			state.comments = [];
 			state.commentsPagination = null;
 		},
+		setRatingLoading(state, action: PayloadAction<boolean>) {
+			state.ratingLoading = action.payload;
+		},
+		setRatingError(state, action: PayloadAction<string | null>) {
+			state.ratingError = action.payload;
+		},
+		clearRatingError(state) {
+			state.ratingError = null;
+		},
+		clearUserRating(state) {
+			state.userRating = null;
+		},
 	},
 });
 
@@ -115,6 +152,8 @@ export const {
 	fetchStart,
 	setRecipes,
 	setRecipeDetail,
+	updateRecipeRating,
+	setUserRating,
 	fetchError,
 	rateLimited,
 	clearSelectedRecipe,
@@ -123,6 +162,10 @@ export const {
 	addComment,
 	fetchCommentsError,
 	clearComments,
+	setRatingLoading,
+	setRatingError,
+	clearRatingError,
+	clearUserRating,
 } = recipeSlice.actions;
 
 export default recipeSlice.reducer;

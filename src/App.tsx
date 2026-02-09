@@ -6,10 +6,11 @@ import LoginPage from "@/pages/LoginPage";
 import HomePage from "@/pages/HomePage";
 import RecipePage from "@/pages/RecipePage";
 import NewRecipePage from "@/pages/NewRecipePage";
+import MyRecipesPage from "@/pages/MyRecipesPage"; // Import the new page
 
 const App = () => {
 	return (
-		<div className='min-h-screen flex flex-col bg-gray-300'>
+		<div className='min-h-screen flex flex-col'>
 			<Navbar />
 
 			<main className='flex-1'>
@@ -22,6 +23,15 @@ const App = () => {
 						element={
 							<ProtectedRoute>
 								<NewRecipePage />
+							</ProtectedRoute>
+						}
+					/>
+
+					<Route
+						path='/my-recipes'
+						element={
+							<ProtectedRoute>
+								<MyRecipesPage />
 							</ProtectedRoute>
 						}
 					/>
