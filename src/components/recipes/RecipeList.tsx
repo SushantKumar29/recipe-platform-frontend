@@ -11,7 +11,7 @@ import FilterSection from "@/components/recipes/FilterSection";
 import Pagination from "@/components/recipes/Pagination";
 import Loader from "@/components/shared/Loader";
 import { fetchRecipes } from "@/slices/recipes/recipeThunks";
-import type { RootState, AppDispatch } from "@/app/store";
+import type { AppDispatch, RootState } from "@/app/store";
 import type { RecipeFilters } from "@/types/recipes/recipeTypes";
 import { Button } from "../ui/button";
 
@@ -154,7 +154,7 @@ const RecipeList = ({
 
 					<div className='flex items-center gap-4'>
 						{showNewRecipeButton && isAuthenticated && (
-							<Link to={"/new-recipes"}>
+							<Link to={"/new-recipe"}>
 								<Button className='cursor-pointer  bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors'>
 									<span>New Recipe</span>
 								</Button>

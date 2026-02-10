@@ -1,8 +1,9 @@
 import { Link } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
-import type { RootState, AppDispatch } from "@/app/store";
+import type { AppDispatch, RootState } from "@/app/store";
 import { logout } from "@/slices/auth/authSlice";
 import { useState, useRef, useEffect } from "react";
+import { Button } from "./ui/button";
 
 const Navbar = () => {
 	const { user, isAuthenticated } = useSelector(
@@ -97,7 +98,14 @@ const Navbar = () => {
 							)}
 						</div>
 					) : (
-						<Link to='/login'>Login</Link>
+						<div className='flex items-center space-x-4'>
+							<Link to='/login'>
+								<Button className='btn btn-primary'>Login</Button>
+							</Link>
+							<Link to='/signup'>
+								<Button className='btn btn-primary'>Sign Up</Button>
+							</Link>
+						</div>
 					)}
 				</div>
 			</div>

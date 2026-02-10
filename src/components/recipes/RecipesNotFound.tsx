@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { Button } from "../ui/button";
 
 const RecipesNotFound = () => {
 	return (
@@ -8,8 +9,10 @@ const RecipesNotFound = () => {
 			<p className='text-base-content/70'>
 				Create your first recipe to get started on your journey.
 			</p>
-			<Link to='/create' className='btn btn-primary'>
-				Create Your First Recipe
+			<Link to='/new-recipe' className='btn btn-primary'>
+				<Button className='cursor-pointer  bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors'>
+					<span>Create Your First Recipe</span>
+				</Button>
 			</Link>
 		</div>
 	);

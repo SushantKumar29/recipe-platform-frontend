@@ -146,6 +146,56 @@ export const fetchRecipeComments = createAsyncThunk(
 	},
 );
 
+export const createRecipe = createAsyncThunk(
+	"recipes/createRecipe",
+	async (formData: FormData, { rejectWithValue }) => {
+		try {
+			const response = await api.post("/recipes", formData, {
+				headers: {
+					"Content-Type": "multipart/form-data",
+				},
+			});
+			return response.data;
+		} catch (error: any) {
+			return rejectWithValue(
+				error?.response?.data?.message || "Failed to create recipe",
+			);
+		}
+	},
+);
+
+export const updateRecipe = createAsyncThunk(
+	"recipes/updateRecipe",
+	async ({ id, data }: { id: string; data: FormData }, { rejectWithValue }) => {
+		try {
+			const response = await api.put(`/recipes/${id}`, data, {
+				headers: {
+					"Content-Type": "multipart/form-data",
+				},
+			});
+			return response.data;
+		} catch (error: any) {
+			return rejectWithValue(
+				error?.response?.data?.message || "Failed to update recipe",
+			);
+		}
+	},
+);
+
+export const deleteRecipe = createAsyncThunk(
+	"recipes/deleteRecipe",
+	async (id: string, { rejectWithValue }) => {
+		try {
+			const response = await api.delete(`/recipes/${id}`);
+			return response.data;
+		} catch (error: any) {
+			return rejectWithValue(
+				error?.response?.data?.message || "Failed to delete recipe",
+			);
+		}
+	},
+);
+
 export const rateRecipe = createAsyncThunk(
 	"recipes/rateRecipe",
 	async (

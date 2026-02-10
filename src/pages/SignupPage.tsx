@@ -1,25 +1,24 @@
-import { useForm } from "react-hook-form";
-import { useDispatch, useSelector } from "react-redux";
-import toast from "react-hot-toast";
-import { useNavigate } from "react-router";
-
+import type { AppDispatch, RootState } from "@/app/store";
 import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { loginUser } from "@/slices/auth/authThunks";
-import type { AppDispatch, RootState } from "@/app/store";
+import { registerUser } from "@/slices/auth/authThunks";
 import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router";
 
-type LoginFormValues = {
+type SignupFormValues = {
+	name: string;
 	email: string;
 	password: string;
 };
 
-const LoginPage = () => {
+const SignupPage = () => {
 	const dispatch = useDispatch<AppDispatch>();
 	const navigate = useNavigate();
 	const { isAuthenticated } = useSelector((state: RootState) => state.auth);
-
 	useEffect(() => {
 		if (isAuthenticated) {
 			navigate("/");
@@ -30,21 +29,15 @@ const LoginPage = () => {
 		register,
 		handleSubmit,
 		formState: { errors, isSubmitting },
-	} = useForm<LoginFormValues>();
+	} = useForm<SignupFormValues>();
 
-	const onSubmit = async (data: LoginFormValues) => {
+	const onSubmit = async (data: SignupFormValues) => {
+		console.log("🚀 ~ onSubmit ~ data:", data);
 		try {
-			await dispatch(loginUser(data)).unwrap();
-			toast.success("Logged in successfully");
-		} catch (err: unknown) {
-			const message =
-				typeof err === "string"
-					? err
-					: err instanceof Error
-						? err.message
-						: (err as any)?.message || "Login failed";
-
-			toast.error(message);
+			await dispatch(registerUser(data)).unwrap();
+			toast.success(JSON.stringify(data));
+		} catch (err: any) {
+			toast.error(err?.message || "Signup failed");
 		}
 	};
 
@@ -57,15 +50,46 @@ const LoginPage = () => {
 			<div className='w-full max-w-md bg-white border-[#00ff9D] border-t-4 rounded-xl shadow-lg p-6 sm:p-8'>
 				<div className='text-center mb-6'>
 					<h1 className='text-2xl sm:text-3xl font-bold text-gray-900 mb-2'>
-						Welcome Back
+						Welcome to Recipe Platform
 					</h1>
 					<p className='text-sm sm:text-base text-gray-600'>
-						Sign in to your account to continue
+						Present your Recipes by creating an account
 					</p>
 				</div>
 
 				<form onSubmit={handleSubmit(onSubmit)}>
 					<FieldGroup>
+						<Field>
+							<FieldLabel
+								htmlFor='fieldgroup-name'
+								className='text-sm sm:text-base'
+							>
+								Name
+							</FieldLabel>
+							<Input
+								id='fieldgroup-name'
+								placeholder='John Doe'
+								type='text'
+								className='text-sm sm:text-base px-3 py-2 sm:px-4 sm:py-3'
+								{...register("name", {
+									required: "Name is required",
+									maxLength: {
+										value: 50,
+										message: "Name must be at most 50 characters",
+									},
+									pattern: {
+										value: /^[A-Za-z\s]+$/,
+										message:
+											"Name cannot contain numbers or special characters",
+									},
+								})}
+							/>
+							{errors.name && (
+								<p className='text-xs sm:text-sm text-red-600 mt-1'>
+									{errors.name.message}
+								</p>
+							)}
+						</Field>
 						<Field>
 							<FieldLabel
 								htmlFor='fieldgroup-email'
@@ -78,7 +102,13 @@ const LoginPage = () => {
 								placeholder='name@example.com'
 								type='email'
 								className='text-sm sm:text-base px-3 py-2 sm:px-4 sm:py-3'
-								{...register("email", { required: "Email is required" })}
+								{...register("email", {
+									required: "Email is required",
+									pattern: {
+										value: /^\S+@\S+\.\S+$/,
+										message: "Invalid email format",
+									},
+								})}
 							/>
 							{errors.email && (
 								<p className='text-xs sm:text-sm text-red-600 mt-1'>
@@ -97,7 +127,13 @@ const LoginPage = () => {
 								id='fieldgroup-password'
 								type='password'
 								className='text-sm sm:text-base px-3 py-2 sm:px-4 sm:py-3'
-								{...register("password", { required: "Password is required" })}
+								{...register("password", {
+									required: "Password is required",
+									minLength: {
+										value: 8,
+										message: "Password must be at least 8 characters",
+									},
+								})}
 							/>
 							{errors.password && (
 								<p className='text-xs sm:text-sm text-red-600 mt-1'>
@@ -114,7 +150,7 @@ const LoginPage = () => {
 								disabled={isSubmitting}
 								className='w-full sm:w-auto text-sm sm:text-base px-3 py-1 sm:px-4 sm:py-2'
 							>
-								{isSubmitting ? "Logging in..." : "Login"}
+								{isSubmitting ? "Signing up..." : "Sign up"}
 							</Button>
 						</Field>
 					</FieldGroup>
@@ -122,12 +158,12 @@ const LoginPage = () => {
 
 				<div className='mt-6 pt-6 border-t border-gray-200 text-center'>
 					<p className='text-sm text-gray-600'>
-						Don't have an account?{" "}
+						Already registered?{" "}
 						<a
-							href='/signup'
+							href='/login'
 							className='text-blue-600 hover:text-blue-800 font-medium'
 						>
-							Sign up here
+							Login here
 						</a>
 					</p>
 					<p className='text-xs text-gray-500 mt-2'>
@@ -145,4 +181,4 @@ const LoginPage = () => {
 	);
 };
 
-export default LoginPage;
+export default SignupPage;

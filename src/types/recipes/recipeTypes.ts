@@ -12,8 +12,8 @@ export interface Rating {
 export interface Recipe {
 	_id: string;
 	title: string;
-	ingredients: string;
-	steps: string;
+	ingredients: string[];
+	steps: string[];
 	image?: string | { url: string; publicId: string };
 	author: string | User;
 	isPublished: boolean;

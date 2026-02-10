@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router";
+import { Link, useParams, useNavigate } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
-import { Star } from "lucide-react";
+import { EditIcon, Star, Trash2Icon } from "lucide-react";
 
 import RateLimitedUI from "@/components/RateLimitedUI";
 import Loader from "@/components/shared/Loader";
@@ -13,6 +13,7 @@ import {
 	fetchRecipeComments,
 	addNewComment,
 	rateRecipe,
+	deleteRecipe,
 } from "@/slices/recipes/recipeThunks";
 import {
 	clearSelectedRecipe,
@@ -23,12 +24,19 @@ import {
 	clearUserRating,
 } from "@/slices/recipes/recipeSlice";
 import type { RootState, AppDispatch } from "@/app/store";
+import type { User } from "@/types/users/userTypes";
+import { formatPreparationTime } from "@/lib/formatters";
 
 const RecipePage = () => {
 	const [commentPage, setCommentPage] = useState(1);
 	const [hoverRating, setHoverRating] = useState<number | null>(null);
+	const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+	const [hasRatingError, setHasRatingError] = useState(false);
+	const [isDeleting, setIsDeleting] = useState(false);
+	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
 	const { id } = useParams<{ id: string }>();
+	const navigate = useNavigate();
 	const dispatch = useDispatch<AppDispatch>();
 
 	const {
@@ -38,12 +46,13 @@ const RecipePage = () => {
 		comments,
 		commentsLoading,
 		commentsPagination,
-		ratingLoading,
 		ratingError,
 		userRating,
 	} = useSelector((state: RootState) => state.recipes);
 
-	const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+	const { user, isAuthenticated } = useSelector(
+		(state: RootState) => state.auth,
+	);
 
 	useEffect(() => {
 		if (id) {
@@ -68,20 +77,27 @@ const RecipePage = () => {
 	}, [dispatch, id, commentPage]);
 
 	useEffect(() => {
-		if (selectedRecipe && selectedRecipe.userRating && id) {
-			dispatch(
-				setUserRating({
-					recipeId: id,
-					value: selectedRecipe.userRating,
-				}),
+		if (selectedRecipe && user && selectedRecipe.ratings) {
+			const userRatingObj = selectedRecipe.ratings.find(
+				(rating: any) => rating.author?._id === user._id,
 			);
+
+			if (userRatingObj && id) {
+				dispatch(
+					setUserRating({
+						recipeId: id,
+						value: userRatingObj.value,
+					}),
+				);
+			}
 		}
-	}, [selectedRecipe, id, dispatch]);
+	}, [selectedRecipe, user, id, dispatch]);
 
 	useEffect(() => {
 		if (ratingError) {
 			toast.error(ratingError);
 			dispatch(setRatingError(null));
+			setHasRatingError(true);
 		}
 	}, [ratingError, dispatch]);
 
@@ -113,6 +129,11 @@ const RecipePage = () => {
 			return;
 		}
 
+		if (isSubmittingRating) return;
+
+		setIsSubmittingRating(true);
+		setHasRatingError(false);
+
 		dispatch(setUserRating({ recipeId: id, value }));
 
 		try {
@@ -120,19 +141,56 @@ const RecipePage = () => {
 				rateRecipe({ recipeId: id, value }),
 			).unwrap();
 
-			if (selectedRecipe) {
-				dispatch(
-					updateRecipeRating({
-						averageRating: response.averageRating,
-						ratingCount: response.ratingCount,
-					}),
-				);
-			}
+			dispatch(
+				updateRecipeRating({
+					averageRating: response.averageRating,
+					ratingCount: response.ratingCount,
+				}),
+			);
 
-			toast.success("Recipe rated successfully!");
+			if (selectedRecipe) {
+				dispatch(fetchRecipeById(id))
+					.unwrap()
+					.then(() => {})
+					.catch(() => {});
+			}
 		} catch (error: any) {
-			dispatch(clearUserRating());
-			toast.error(error);
+			const errorMessage = error?.message || error?.toString() || "";
+			const isRateLimitError =
+				errorMessage.includes("rate") ||
+				errorMessage.includes("limit") ||
+				errorMessage.includes("too many") ||
+				errorMessage.includes("try again");
+
+			if (isRateLimitError) {
+				toast.error(
+					"You've rated too many recipes recently. Please wait before rating again.",
+				);
+			} else {
+				dispatch(clearUserRating());
+				toast.error(errorMessage || "Failed to submit rating");
+			}
+			setHasRatingError(true);
+		} finally {
+			setIsSubmittingRating(false);
+		}
+	};
+
+	const handleDeleteRecipe = async () => {
+		if (!id || !selectedRecipe) return;
+
+		setIsDeleting(true);
+		try {
+			await dispatch(deleteRecipe(id)).unwrap();
+			toast.success("Recipe deleted successfully!");
+			navigate("/recipes"); // Navigate to recipes list page
+		} catch (error: any) {
+			const errorMessage =
+				error?.message || error?.toString() || "Failed to delete recipe";
+			toast.error(errorMessage);
+		} finally {
+			setIsDeleting(false);
+			setShowDeleteConfirm(false);
 		}
 	};
 
@@ -160,15 +218,46 @@ const RecipePage = () => {
 		return "A";
 	};
 
-	const getCurrentRating = () => {
+	const getCurrentUserRating = () => {
 		if (hoverRating !== null) return hoverRating;
 		if (userRating && userRating.recipeId === id) return userRating.value;
-		return selectedRecipe?.averageRating || 0;
+		if (selectedRecipe?.ratings && user) {
+			const userRatingObj = selectedRecipe.ratings.find(
+				(rating: any) => rating.author?._id === user._id,
+			);
+			return userRatingObj?.value || 0;
+		}
+		return 0;
 	};
 
 	const hasUserRated = () => {
-		return userRating && userRating.recipeId === id;
+		if (userRating && userRating.recipeId === id) return true;
+		if (selectedRecipe?.ratings && user) {
+			return selectedRecipe.ratings.some(
+				(rating: any) => rating.author?._id === user._id,
+			);
+		}
+		return false;
 	};
+
+	const getUserRatingValue = () => {
+		if (userRating && userRating.recipeId === id) return userRating.value;
+		if (selectedRecipe?.ratings && user) {
+			const userRatingObj = selectedRecipe.ratings.find(
+				(rating: any) => rating.author?._id === user._id,
+			);
+			return userRatingObj?.value || 0;
+		}
+		return 0;
+	};
+
+	const isOwner = () => {
+		if (!isAuthenticated) return false;
+		return (selectedRecipe?.author as User)?._id === user?._id;
+	};
+
+	const isRatingDisabled =
+		!isAuthenticated || hasUserRated() || isSubmittingRating || hasRatingError;
 
 	if (loading) return <Loader />;
 
@@ -177,7 +266,41 @@ const RecipePage = () => {
 			{isRateLimited && <RateLimitedUI />}
 
 			{!isRateLimited && selectedRecipe && (
-				<div className='bg-white rounded-lg shadow-md max-w-7xl mx-auto p-4 mt-6'>
+				<div className='bg-white rounded-lg shadow-md max-w-7xl mx-auto p-4 my-6'>
+					{/* Delete Confirmation Modal */}
+					{showDeleteConfirm && (
+						<div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
+							<div className='bg-white rounded-lg p-6 max-w-md w-full mx-4'>
+								<h3 className='text-lg font-semibold text-gray-900 mb-2'>
+									Delete Recipe
+								</h3>
+								<p className='text-gray-600 mb-6'>
+									Are you sure you want to delete "{selectedRecipe.title}"? This
+									action cannot be undone.
+								</p>
+								<div className='flex justify-end gap-3'>
+									<button
+										onClick={() => setShowDeleteConfirm(false)}
+										disabled={isDeleting}
+										className='px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50'
+									>
+										Cancel
+									</button>
+									<button
+										onClick={handleDeleteRecipe}
+										disabled={isDeleting}
+										className='px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center gap-2'
+									>
+										{isDeleting && (
+											<div className='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
+										)}
+										{isDeleting ? "Deleting..." : "Delete"}
+									</button>
+								</div>
+							</div>
+						</div>
+					)}
+
 					{selectedRecipe.image && (
 						<div className='mb-6 rounded-lg overflow-hidden'>
 							<img
@@ -191,9 +314,28 @@ const RecipePage = () => {
 							/>
 						</div>
 					)}
-					<h2 className='text-2xl font-bold text-gray-900 mb-3'>
-						{selectedRecipe.title}
-					</h2>
+					<div className='flex justify-start items-center gap-4 mb-3'>
+						<span className='text-2xl font-bold text-gray-900'>
+							{selectedRecipe.title}
+						</span>
+						{isOwner() && (
+							<div className='flex gap-2'>
+								<Link
+									to={`/recipes/${id}/edit`}
+									className='text-blue-500 hover:text-blue-600 p-2 rounded hover:bg-blue-50'
+								>
+									<EditIcon />
+								</Link>
+								<button
+									onClick={() => setShowDeleteConfirm(true)}
+									className='text-red-500 hover:text-red-600 p-2 rounded hover:bg-red-50'
+									title='Delete recipe'
+								>
+									<Trash2Icon />
+								</button>
+							</div>
+						)}
+					</div>
 
 					<div className='mb-4 text-sm text-gray-600'>
 						By:{" "}
@@ -203,76 +345,77 @@ const RecipePage = () => {
 					</div>
 
 					<div className='mb-6'>
-						<div className='flex items-center gap-4'>
+						<div className='flex flex-col gap-4'>
 							<div className='flex items-center gap-2'>
-								<div className='flex'>
-									{[1, 2, 3, 4, 5].map((star) => {
-										const currentRating = getCurrentRating();
-										const isFilled = star <= currentRating;
-										const isUserRating =
-											hasUserRated() && userRating?.value === star;
+								<span className='text-yellow-500 font-bold text-lg'>
+									★ {(selectedRecipe.averageRating ?? 0).toFixed(1)}
+								</span>
+								<span className='text-gray-500 text-sm'>
+									({selectedRecipe.ratingCount ?? 0}{" "}
+									{selectedRecipe.ratingCount === 1 ? "rating" : "ratings"})
+								</span>
+							</div>
 
-										return (
-											<button
-												key={star}
-												type='button'
-												onClick={() => handleRateRecipe(star)}
-												onMouseEnter={() => setHoverRating(star)}
-												onMouseLeave={() => setHoverRating(null)}
-												disabled={!isAuthenticated || ratingLoading}
-												className={`p-1 transition-all duration-200 ${
-													!isAuthenticated
-														? "cursor-not-allowed"
-														: "cursor-pointer hover:scale-110"
-												} ${ratingLoading ? "opacity-50" : ""}`}
-												aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
-											>
-												<Star
-													size={28}
-													className={`
-														${
-															isFilled
-																? isUserRating
-																	? "fill-blue-500 text-blue-500"
-																	: "fill-yellow-500 text-yellow-500"
-																: "text-gray-300"
-														}
-														transition-colors duration-200
-													`}
-												/>
-											</button>
-										);
-									})}
-								</div>
+							<div className='flex items-center gap-4'>
+								<div className='flex items-center gap-2'>
+									<div className='flex'>
+										{[1, 2, 3, 4, 5].map((star) => {
+											const currentUserRating = getCurrentUserRating();
+											const isFilled = star <= currentUserRating;
 
-								<div className='flex flex-col'>
-									<div className='flex items-center gap-2'>
-										<span className='text-yellow-500 font-bold text-lg'>
-											★ {selectedRecipe.averageRating?.toFixed(1) || "0.0"}
-										</span>
-										<span className='text-gray-500 text-sm'>
-											({selectedRecipe.ratingCount || 0}{" "}
-											{selectedRecipe.ratingCount === 1 ? "rating" : "ratings"})
-										</span>
+											return (
+												<button
+													key={star}
+													type='button'
+													onClick={() => handleRateRecipe(star)}
+													onMouseEnter={() => setHoverRating(star)}
+													onMouseLeave={() => setHoverRating(null)}
+													disabled={isRatingDisabled}
+													className={`p-1 transition-all duration-200 ${
+														isRatingDisabled
+															? "cursor-not-allowed opacity-50"
+															: "cursor-pointer hover:scale-110"
+													} ${isSubmittingRating ? "opacity-50" : ""}`}
+													aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
+												>
+													<Star
+														size={28}
+														className={`
+															${isFilled ? "fill-yellow-500 text-yellow-500" : "text-gray-300"}
+															transition-colors duration-200
+														`}
+													/>
+												</button>
+											);
+										})}
 									</div>
 
-									{isAuthenticated && (
-										<p className='text-xs text-gray-500 mt-1'>
-											{hasUserRated()
-												? `You rated this ${userRating!.value} star${userRating!.value > 1 ? "s" : ""}`
-												: ""}
-										</p>
-									)}
-									{!isAuthenticated && (
-										<p className='text-xs text-gray-500 mt-1'>
-											Login to rate this recipe
-										</p>
-									)}
+									<div className='flex flex-col'>
+										{isAuthenticated && (
+											<>
+												{hasUserRated() ? (
+													<p className='text-sm text-gray-600'>
+														You rated this {getUserRatingValue()} star
+														{getUserRatingValue() > 1 ? "s" : ""}
+													</p>
+												) : (
+													<p className='text-sm text-gray-600'>
+														Rate this recipe
+													</p>
+												)}
+											</>
+										)}
+										{!isAuthenticated && (
+											<p className='text-sm text-gray-600'>
+												Login to rate this recipe
+											</p>
+										)}
+									</div>
 								</div>
 							</div>
 						</div>
 
-						{ratingLoading && (
+						{isSubmittingRating && (
 							<div className='mt-2 flex items-center gap-2'>
 								<div className='h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600' />
 								<span className='text-sm text-gray-600'>
@@ -284,10 +427,23 @@ const RecipePage = () => {
 
 					<div className='mb-6'>
 						<h3 className='text-lg font-semibold text-gray-900 mb-2'>
-							Ingredients
+							Preparation Time
 						</h3>
 						<div className='text-gray-700 whitespace-pre-line'>
-							{selectedRecipe.ingredients}
+							{formatPreparationTime(selectedRecipe.preparationTime)}
+						</div>
+					</div>
+
+					<div className='mb-6'>
+						<h3 className='text-lg font-semibold text-gray-900 mb-2'>
+							Ingredients
+						</h3>
+						<div className='text-gray-700 whitespace-pre-line ml-6'>
+							<ul className='list-disc'>
+								{selectedRecipe.ingredients.map((ingredient, idx) => (
+									<li key={idx}>{ingredient}</li>
+								))}
+							</ul>
 						</div>
 					</div>
 
@@ -295,8 +451,12 @@ const RecipePage = () => {
 						<h3 className='text-lg font-semibold text-gray-900 mb-2'>
 							Instructions
 						</h3>
-						<div className='text-gray-700 whitespace-pre-line'>
-							{selectedRecipe.steps}
+						<div className='text-gray-700 whitespace-pre-line ml-6'>
+							<ul className='list-disc'>
+								{selectedRecipe.steps.map((step, idx) => (
+									<li key={idx}>{step}</li>
+								))}
+							</ul>
 						</div>
 					</div>
 

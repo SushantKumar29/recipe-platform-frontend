@@ -3,12 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { createRecipe } from "@/slices/recipes/recipeThunks";
+import { fetchRecipeById, updateRecipe } from "@/slices/recipes/recipeThunks";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router";
+import { useNavigate, useParams } from "react-router";
 
 type RecipeFormValues = {
 	title: string;
@@ -18,55 +18,103 @@ type RecipeFormValues = {
 	image: FileList;
 };
 
-const NewRecipePage = () => {
+const EditRecipePage = () => {
+	const { id } = useParams<{ id: string }>();
 	const dispatch = useDispatch<AppDispatch>();
 	const navigate = useNavigate();
+
 	const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+
+	const { selectedRecipe, loading } = useSelector(
+		(state: RootState) => state.recipes,
+	);
+
+	const {
+		register,
+		handleSubmit,
+		reset,
+		formState: { errors, isSubmitting },
+	} = useForm<RecipeFormValues>();
+
 	useEffect(() => {
 		if (!isAuthenticated) {
 			navigate("/login");
 		}
 	}, [isAuthenticated, navigate]);
 
-	const {
-		register,
-		handleSubmit,
-		formState: { errors, isSubmitting },
-	} = useForm<RecipeFormValues>();
+	useEffect(() => {
+		if (!id) return;
+		dispatch(fetchRecipeById(id));
+	}, [id, dispatch]);
+
+	useEffect(() => {
+		if (selectedRecipe) {
+			reset({
+				title: selectedRecipe.title,
+				ingredients: selectedRecipe.ingredients.join("\n"),
+				preparationTime: selectedRecipe.preparationTime,
+				steps: selectedRecipe.steps.join("\n"),
+			});
+		}
+	}, [selectedRecipe, reset]);
 
 	const onSubmit = async (data: RecipeFormValues) => {
 		try {
+			if (!id) return;
+
 			const formData = new FormData();
 			formData.append("title", data.title);
 			formData.append("ingredients", data.ingredients);
 			formData.append("preparationTime", String(data.preparationTime));
 			formData.append("steps", data.steps);
-			formData.append("image", data?.image?.[0]);
 
-			await dispatch(createRecipe(formData)).unwrap();
-			toast.success("Recipe created successfully");
-			navigate("/");
+			if (data.image && data.image.length > 0) {
+				formData.append("image", data.image[0]);
+			}
+
+			await dispatch(updateRecipe({ id, data: formData })).unwrap();
+
+			toast.success("Recipe updated successfully");
+			navigate(`/recipes/${id}`);
 		} catch (err: any) {
 			toast.error(
 				typeof err === "string"
 					? err
-					: err?.message || "Failed to create recipe",
+					: err?.message || "Failed to update recipe",
 			);
 		}
 	};
+	const imageUrl =
+		typeof selectedRecipe?.image === "string"
+			? selectedRecipe.image
+			: selectedRecipe?.image?.url;
 
-	if (!isAuthenticated) {
-		return null;
+	if (loading || !selectedRecipe) {
+		return (
+			<div className='py-24 text-center text-gray-600'>Loading recipe...</div>
+		);
 	}
+
+	if (!isAuthenticated) return null;
 
 	return (
 		<div className='h-full my-16 py-16 flex items-center justify-center'>
 			<div className='w-full max-w-4xl bg-white border-[#00ff9D] border-t-4 rounded-xl shadow-lg p-6 sm:p-8'>
 				<div className='text-center mb-6'>
 					<h1 className='text-2xl sm:text-3xl font-bold text-gray-900 mb-2'>
-						Add Your Recipe
+						Edit Recipe
 					</h1>
 				</div>
+
+				{imageUrl && (
+					<div className='mb-4 flex justify-center'>
+						<img
+							src={imageUrl}
+							alt={selectedRecipe.title}
+							className='h-40 rounded-md object-cover'
+						/>
+					</div>
+				)}
 
 				<form onSubmit={handleSubmit(onSubmit)}>
 					<FieldGroup>
@@ -74,12 +122,11 @@ const NewRecipePage = () => {
 							<FieldLabel htmlFor='title'>Title</FieldLabel>
 							<Input
 								id='title'
-								placeholder='Chocolate Cake'
 								{...register("title", {
 									required: "Title is required",
 									maxLength: {
 										value: 100,
-										message: "Title must be under 100 characters",
+										message: "Max 100 characters",
 									},
 								})}
 							/>
@@ -87,16 +134,16 @@ const NewRecipePage = () => {
 								<p className='text-xs text-red-600'>{errors.title.message}</p>
 							)}
 						</Field>
+
 						<Field>
 							<FieldLabel htmlFor='ingredients'>Ingredients</FieldLabel>
 							<Textarea
 								id='ingredients'
-								placeholder='Flour, Sugar, Cocoa powder...'
 								{...register("ingredients", {
 									required: "Ingredients are required",
 									minLength: {
 										value: 10,
-										message: "Please add more detailed ingredients",
+										message: "Add more details",
 									},
 								})}
 							/>
@@ -106,6 +153,7 @@ const NewRecipePage = () => {
 								</p>
 							)}
 						</Field>
+
 						<Field>
 							<FieldLabel htmlFor='preparationTime'>
 								Preparation Time (minutes)
@@ -114,11 +162,11 @@ const NewRecipePage = () => {
 								id='preparationTime'
 								type='number'
 								{...register("preparationTime", {
-									required: "Preparation time is required",
+									required: "Required",
 									valueAsNumber: true,
 									min: {
 										value: 1,
-										message: "Must be at least 1 minute",
+										message: "Minimum 1 minute",
 									},
 								})}
 							/>
@@ -128,16 +176,16 @@ const NewRecipePage = () => {
 								</p>
 							)}
 						</Field>
+
 						<Field>
 							<FieldLabel htmlFor='steps'>Steps</FieldLabel>
 							<Textarea
 								id='steps'
-								placeholder='Step 1: Preheat oven...'
 								{...register("steps", {
 									required: "Steps are required",
 									minLength: {
 										value: 20,
-										message: "Steps should be more detailed",
+										message: "Too short",
 									},
 								})}
 							/>
@@ -145,56 +193,31 @@ const NewRecipePage = () => {
 								<p className='text-xs text-red-600'>{errors.steps.message}</p>
 							)}
 						</Field>
+
 						<Field>
-							<FieldLabel htmlFor='image'>Recipe Image</FieldLabel>
+							<FieldLabel htmlFor='image'>Replace Image (optional)</FieldLabel>
 							<Input
 								id='image'
 								type='file'
 								accept='image/*'
 								{...register("image")}
 							/>
-							{errors.image && (
-								<p className='text-xs text-red-600'>{errors.image.message}</p>
-							)}
 						</Field>
-						<Field
-							orientation='horizontal'
-							className='flex-col sm:flex-row gap-2 sm:gap-3 mt-6'
-						>
+
+						<Field className='mt-6'>
 							<Button
 								type='submit'
 								disabled={isSubmitting}
-								className='w-full sm:w-auto text-sm sm:text-base px-3 py-1 sm:px-4 sm:py-2'
+								className='w-full sm:w-auto'
 							>
-								{isSubmitting ? "Submitting..." : "Submit"}
+								{isSubmitting ? "Updating..." : "Update Recipe"}
 							</Button>
 						</Field>
 					</FieldGroup>
 				</form>
-
-				<div className='mt-6 pt-6 border-t border-gray-200 text-center'>
-					<p className='text-sm text-gray-600'>
-						Already registered?{" "}
-						<a
-							href='/login'
-							className='text-blue-600 hover:text-blue-800 font-medium'
-						>
-							Login here
-						</a>
-					</p>
-					<p className='text-xs text-gray-500 mt-2'>
-						Forgot your password?{" "}
-						<a
-							href='/forgot-password'
-							className='text-blue-500 hover:text-blue-700'
-						>
-							Reset it
-						</a>
-					</p>
-				</div>
 			</div>
 		</div>
 	);
 };
 
-export default NewRecipePage;
+export default EditRecipePage;

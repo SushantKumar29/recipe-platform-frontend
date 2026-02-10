@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Recipe } from "@/types/recipes/recipeTypes";
+import { formatPreparationTime } from "@/lib/formatters";
 
 interface RecipeCardProps {
 	recipe: Recipe;
@@ -70,7 +71,9 @@ const RecipeCard = ({ recipe }: RecipeCardProps) => {
 
 				<CardDescription className='flex items-center gap-2'>
 					<Clock className='w-4 h-4 text-gray-400' />
-					<span>Preparation time: {recipe.preparationTime} minutes</span>
+					<span>
+						Preparation time: {formatPreparationTime(recipe.preparationTime)}
+					</span>
 				</CardDescription>
 			</CardHeader>
 
