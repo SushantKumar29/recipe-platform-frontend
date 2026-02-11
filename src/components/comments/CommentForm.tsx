@@ -2,6 +2,7 @@ import { useState } from "react";
 
 interface CommentFormProps {
 	onSubmit: (content: string) => void;
+	initialValue?: string;
 	disabled?: boolean;
 }
 

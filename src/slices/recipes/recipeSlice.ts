@@ -29,6 +29,8 @@ interface RecipeState {
 		recipeId: string;
 		value: number;
 	} | null;
+	updatingCommentId: string | null;
+	deletingCommentId: string | null;
 }
 
 const initialState: RecipeState = {
@@ -43,6 +45,8 @@ const initialState: RecipeState = {
 	ratingLoading: false,
 	ratingError: null,
 	userRating: null,
+	updatingCommentId: null,
+	deletingCommentId: null,
 };
 
 interface SetRecipesPayload {
@@ -126,6 +130,34 @@ const recipeSlice = createSlice({
 				state.commentsPagination.totalComments += 1;
 			}
 		},
+
+		updateComment(state, action: PayloadAction<Comment>) {
+			const index = state.comments.findIndex(
+				(comment) => comment._id === action.payload._id,
+			);
+			if (index !== -1) {
+				state.comments[index] = action.payload;
+			}
+			state.updatingCommentId = null;
+		},
+
+		deleteComment(state, action: PayloadAction<string>) {
+			state.comments = state.comments.filter(
+				(comment) => comment._id !== action.payload,
+			);
+			if (state.commentsPagination) {
+				state.commentsPagination.totalComments -= 1;
+			}
+			state.deletingCommentId = null;
+		},
+
+		setUpdatingCommentId(state, action: PayloadAction<string | null>) {
+			state.updatingCommentId = action.payload;
+		},
+
+		setDeletingCommentId(state, action: PayloadAction<string | null>) {
+			state.deletingCommentId = action.payload;
+		},
 		fetchCommentsError(state) {
 			state.commentsLoading = false;
 		},
@@ -160,12 +192,16 @@ export const {
 	fetchCommentsStart,
 	setComments,
 	addComment,
+	updateComment,
+	deleteComment,
 	fetchCommentsError,
 	clearComments,
 	setRatingLoading,
 	setRatingError,
 	clearRatingError,
 	clearUserRating,
+	setUpdatingCommentId,
+	setDeletingCommentId,
 } = recipeSlice.actions;
 
 export default recipeSlice.reducer;

@@ -1,4 +1,4 @@
-import type { User } from "@/types/users/userTypes";
+import type { User } from "../users/userTypes";
 
 export interface Comment {
 	_id: string;
@@ -11,14 +11,7 @@ export interface Comment {
 
 export interface CommentResponse {
 	comments: Comment[];
-	pagination: {
-		page: number;
-		totalPages: number;
-		totalComments: number;
-		hasNext: boolean;
-		hasPrev: boolean;
-		limit: number;
-	};
+	pagination: CommentsPagination;
 }
 
 export interface AddCommentData {
@@ -26,9 +19,27 @@ export interface AddCommentData {
 	recipeId: string;
 }
 
+export interface UpdateCommentData {
+	content: string;
+	commentId: string;
+}
+
+export interface DeleteCommentData {
+	commentId: string;
+}
+
 export interface CommentQueryParams {
 	page?: number;
 	limit?: number;
 	sortBy?: "createdAt" | "updatedAt";
 	sortOrder?: "asc" | "desc";
+}
+
+export interface CommentsPagination {
+	page: number;
+	totalPages: number;
+	totalComments: number;
+	hasNext: boolean;
+	hasPrev: boolean;
+	limit: number;
 }

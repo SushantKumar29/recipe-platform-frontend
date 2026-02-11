@@ -6,12 +6,11 @@ import { EditIcon, Star, Trash2Icon } from "lucide-react";
 
 import RateLimitedUI from "@/components/RateLimitedUI";
 import Loader from "@/components/shared/Loader";
-import CommentForm from "@/components/comments/CommentForm";
+import RecipeComments from "@/components/comments/RecipeComments";
 
 import {
 	fetchRecipeById,
 	fetchRecipeComments,
-	addNewComment,
 	rateRecipe,
 	deleteRecipe,
 } from "@/slices/recipes/recipeThunks";
@@ -61,20 +60,26 @@ const RecipePage = () => {
 				.catch(() => {
 					toast.error("Failed to load recipe");
 				});
+		}
+	}, [dispatch, id]);
 
+	useEffect(() => {
+		if (id) {
 			dispatch(fetchRecipeComments({ recipeId: id, page: commentPage }))
 				.unwrap()
 				.catch(() => {
 					toast.error("Failed to load comments");
 				});
 		}
+	}, [dispatch, id, commentPage]);
 
+	useEffect(() => {
 		return () => {
 			dispatch(clearSelectedRecipe());
 			dispatch(clearComments());
 			dispatch(clearUserRating());
 		};
-	}, [dispatch, id, commentPage]);
+	}, [dispatch]);
 
 	useEffect(() => {
 		if (selectedRecipe && user && selectedRecipe.ratings) {
@@ -105,17 +110,25 @@ const RecipePage = () => {
 		if (!id) return;
 
 		try {
+			const { addNewComment } = await import("@/slices/recipes/recipeThunks");
 			await dispatch(addNewComment({ recipeId: id, content })).unwrap();
 			toast.success("Comment added successfully!");
+
+			// Refresh comments to show the new comment on first page
+			setCommentPage(1);
 		} catch (error) {
 			toast.error("Failed to add comment");
 		}
 	};
 
-	const handleLoadMoreComments = () => {
-		if (commentsPagination?.hasNext && id) {
-			setCommentPage((prev) => prev + 1);
-		}
+	const handleCommentPageChange = (page: number) => {
+		setCommentPage(page);
+		// Scroll to comments section for better UX
+		setTimeout(() => {
+			document.getElementById("comments-section")?.scrollIntoView({
+				behavior: "smooth",
+			});
+		}, 100);
 	};
 
 	const handleRateRecipe = async (value: number) => {
@@ -183,7 +196,7 @@ const RecipePage = () => {
 		try {
 			await dispatch(deleteRecipe(id)).unwrap();
 			toast.success("Recipe deleted successfully!");
-			navigate("/recipes"); // Navigate to recipes list page
+			navigate("/");
 		} catch (error: any) {
 			const errorMessage =
 				error?.message || error?.toString() || "Failed to delete recipe";
@@ -192,30 +205,6 @@ const RecipePage = () => {
 			setIsDeleting(false);
 			setShowDeleteConfirm(false);
 		}
-	};
-
-	const getAuthorName = (comment: any) => {
-		if (!comment.author) return "Anonymous";
-
-		if (typeof comment.author === "object" && comment.author.name) {
-			return comment.author.name;
-		}
-
-		if (typeof comment.author === "string") {
-			return `User ${comment.author.substring(0, 4)}...`;
-		}
-
-		return "Anonymous";
-	};
-
-	const getAuthorInitial = (comment: any) => {
-		if (!comment.author) return "A";
-
-		if (typeof comment.author === "object" && comment.author.name) {
-			return comment.author.name.charAt(0).toUpperCase();
-		}
-
-		return "A";
 	};
 
 	const getCurrentUserRating = () => {
@@ -267,7 +256,6 @@ const RecipePage = () => {
 
 			{!isRateLimited && selectedRecipe && (
 				<div className='bg-white rounded-lg shadow-md max-w-7xl mx-auto p-4 my-6'>
-					{/* Delete Confirmation Modal */}
 					{showDeleteConfirm && (
 						<div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
 							<div className='bg-white rounded-lg p-6 max-w-md w-full mx-4'>
@@ -381,9 +369,9 @@ const RecipePage = () => {
 													<Star
 														size={28}
 														className={`
-															${isFilled ? "fill-yellow-500 text-yellow-500" : "text-gray-300"}
-															transition-colors duration-200
-														`}
+                              ${isFilled ? "fill-yellow-500 text-yellow-500" : "text-gray-300"}
+                              transition-colors duration-200
+                            `}
 													/>
 												</button>
 											);
@@ -460,60 +448,19 @@ const RecipePage = () => {
 						</div>
 					</div>
 
-					<div className='mt-8'>
-						<h3 className='text-lg font-semibold text-gray-900 mb-3'>
-							Comments ({commentsPagination?.totalComments || 0})
-						</h3>
-
-						{isAuthenticated && (
-							<div className='mb-6'>
-								<CommentForm onSubmit={handleAddComment} />
-							</div>
-						)}
-
-						{commentsLoading && commentPage === 1 ? (
-							<Loader />
-						) : comments.length > 0 ? (
-							<>
-								<div className='space-y-4'>
-									{comments.map((comment) => (
-										<div
-											key={comment._id}
-											className='border rounded-xl px-4 py-3'
-										>
-											<div className='flex items-center mb-2'>
-												<span className='h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-sm font-semibold text-gray-600'>
-													{getAuthorInitial(comment)}
-												</span>
-												<span className='ml-2 font-medium'>
-													{getAuthorName(comment)}
-												</span>
-											</div>
-											<p className='text-gray-700 ml-10'>{comment.content}</p>
-											<div className='text-xs text-gray-500 ml-10 mt-1'>
-												{new Date(comment.createdAt).toLocaleDateString()}
-											</div>
-										</div>
-									))}
-								</div>
-
-								{commentsPagination?.hasNext && (
-									<div className='mt-6 text-center'>
-										<button
-											onClick={handleLoadMoreComments}
-											disabled={commentsLoading}
-											className='px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50'
-										>
-											{commentsLoading ? "Loading..." : "Load More Comments"}
-										</button>
-									</div>
-								)}
-							</>
-						) : (
-							<p className='text-sm text-gray-400 italic'>
-								No comments yet. Be the first to comment!
-							</p>
-						)}
+					<div id='comments-section'>
+						<RecipeComments
+							comments={comments}
+							commentsLoading={commentsLoading}
+							commentsPagination={{
+								page: commentPage,
+								pages: commentsPagination?.totalPages || 1,
+								totalComments: commentsPagination?.totalComments || 0,
+								limit: commentsPagination?.limit || 10,
+							}}
+							onPageChange={handleCommentPageChange}
+							onAddComment={handleAddComment}
+						/>
 					</div>
 				</div>
 			)}

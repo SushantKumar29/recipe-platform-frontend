@@ -41,7 +41,7 @@ const RecipeList = ({
 		sortOrder: "desc",
 	});
 	const [page, setPage] = useState(1);
-	const [limit] = useState(12);
+	const [limit] = useState(10);
 	const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const [searchInput, setSearchInput] = useState("");
 

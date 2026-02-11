@@ -11,10 +11,16 @@ import {
 	fetchCommentsStart,
 	addComment,
 	fetchCommentsError,
+	updateComment,
+	deleteComment,
+	setUpdatingCommentId,
+	setDeletingCommentId,
 } from "./recipeSlice";
 import type { RecipesResponse } from "../../types/recipes/recipeTypes";
 import type {
 	AddCommentData,
+	UpdateCommentData,
+	DeleteCommentData,
 	CommentResponse,
 } from "@/types/comments/commentTypes";
 
@@ -104,7 +110,7 @@ export const fetchRecipeComments = createAsyncThunk(
 		{
 			recipeId,
 			page = 1,
-			limit = 10,
+			limit = 3,
 			sortBy = "createdAt",
 			sortOrder = "desc",
 		}: {
@@ -228,6 +234,57 @@ export const addNewComment = createAsyncThunk(
 				dispatch(rateLimited());
 			}
 			throw error;
+		}
+	},
+);
+
+export const updateRecipeComment = createAsyncThunk(
+	"recipes/updateComment",
+	async (
+		{ commentId, content }: UpdateCommentData,
+		{ dispatch, rejectWithValue },
+	) => {
+		try {
+			dispatch(setUpdatingCommentId(commentId));
+
+			const res = await api.put(`/comments/${commentId}`, {
+				content,
+			});
+
+			dispatch(updateComment(res.data.comment));
+			return res.data.comment;
+		} catch (error: any) {
+			if (axios.isAxiosError(error) && error.response?.status === 429) {
+				dispatch(rateLimited());
+			}
+			return rejectWithValue(
+				error.response?.data?.message || "Failed to update comment",
+			);
+		} finally {
+			dispatch(setUpdatingCommentId(null));
+		}
+	},
+);
+
+export const deleteRecipeComment = createAsyncThunk(
+	"recipes/deleteComment",
+	async ({ commentId }: DeleteCommentData, { dispatch, rejectWithValue }) => {
+		try {
+			dispatch(setDeletingCommentId(commentId));
+
+			await api.delete(`/comments/${commentId}`);
+
+			dispatch(deleteComment(commentId));
+			return commentId;
+		} catch (error: any) {
+			if (axios.isAxiosError(error) && error.response?.status === 429) {
+				dispatch(rateLimited());
+			}
+			return rejectWithValue(
+				error.response?.data?.message || "Failed to delete comment",
+			);
+		} finally {
+			dispatch(setDeletingCommentId(null));
 		}
 	},
 );

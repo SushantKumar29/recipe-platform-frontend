@@ -32,7 +32,6 @@ const SignupPage = () => {
 	} = useForm<SignupFormValues>();
 
 	const onSubmit = async (data: SignupFormValues) => {
-		console.log("🚀 ~ onSubmit ~ data:", data);
 		try {
 			await dispatch(registerUser(data)).unwrap();
 			toast.success(JSON.stringify(data));
