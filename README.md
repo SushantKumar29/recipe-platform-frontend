@@ -47,8 +47,15 @@ This variable defines the base URL for all backend API requests.
    ```
 
 3. Start the Development Server
+
    ```
    npm run dev
+   ```
+
+4. Test the Application
+
+   ```
+   npm run test
    ```
 
 ## Application URL
@@ -62,11 +69,12 @@ http://localhost:5173
 ## Project Structure (Overview)
 
 - src/ – Application source code
+  - app/ – API, Redux store and hooks
   - components/ – Reusable UI components
+  - lib/ – Utility functions
   - pages/ – Page-level components
-  - routes/ – Application routes
-  - services/ – API and Axios configuration
-  - styles/ – Global styles and Tailwind setup
+  - slices/ – Redux thunks and slices
+  - types/ – Type definitions
 
 ## Notes
 

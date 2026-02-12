@@ -52,44 +52,72 @@ const authSlice = createSlice({
 	},
 	extraReducers: (builder) => {
 		builder
-			.addCase("auth/signup/pending", (state) => {
-				state.loading = true;
-				state.error = null;
-			})
-			.addCase("auth/signup/fulfilled", (state, action: any) => {
-				state.loading = false;
-				state.user = action.payload.user;
-				state.token = action.payload.token;
-				state.isAuthenticated = true;
-				state.error = null;
 
-				localStorage.setItem("auth", JSON.stringify(state));
-			})
-			.addCase("auth/signup/rejected", (state, action: any) => {
-				state.loading = false;
-				state.error = action.payload;
+			// SIGNUP
+			.addMatcher(
+				(action): action is PayloadAction<{ user: User; token: string }> =>
+					action.type === "auth/signup/fulfilled",
+				(state, action) => {
+					state.loading = false;
+					state.user = action.payload.user;
+					state.token = action.payload.token;
+					state.isAuthenticated = true;
+					state.error = null;
 
-				localStorage.removeItem("auth");
-			})
-			.addCase("auth/login/pending", (state) => {
-				state.loading = true;
-				state.error = null;
-			})
-			.addCase("auth/login/fulfilled", (state, action: any) => {
-				state.loading = false;
-				state.user = action.payload.user;
-				state.token = action.payload.token;
-				state.isAuthenticated = true;
-				state.error = null;
+					localStorage.setItem("auth", JSON.stringify(state));
+				},
+			)
 
-				localStorage.setItem("auth", JSON.stringify(state));
-			})
-			.addCase("auth/login/rejected", (state, action: any) => {
-				state.loading = false;
-				state.error = action.payload;
+			.addMatcher(
+				(action): action is PayloadAction<string | undefined> =>
+					action.type === "auth/signup/rejected",
+				(state, action) => {
+					state.loading = false;
+					state.error = action.payload ?? "Signup failed";
+					localStorage.removeItem("auth");
+				},
+			)
 
-				localStorage.removeItem("auth");
-			});
+			.addMatcher(
+				(action) => action.type === "auth/signup/pending",
+				(state) => {
+					state.loading = true;
+					state.error = null;
+				},
+			)
+
+			// LOGIN
+			.addMatcher(
+				(action): action is PayloadAction<{ user: User; token: string }> =>
+					action.type === "auth/login/fulfilled",
+				(state, action) => {
+					state.loading = false;
+					state.user = action.payload.user;
+					state.token = action.payload.token;
+					state.isAuthenticated = true;
+					state.error = null;
+
+					localStorage.setItem("auth", JSON.stringify(state));
+				},
+			)
+
+			.addMatcher(
+				(action): action is PayloadAction<string | undefined> =>
+					action.type === "auth/login/rejected",
+				(state, action) => {
+					state.loading = false;
+					state.error = action.payload ?? "Login failed";
+					localStorage.removeItem("auth");
+				},
+			)
+
+			.addMatcher(
+				(action) => action.type === "auth/login/pending",
+				(state) => {
+					state.loading = true;
+					state.error = null;
+				},
+			);
 	},
 });
 

@@ -42,7 +42,7 @@ const LoginPage = () => {
 					? err
 					: err instanceof Error
 						? err.message
-						: (err as any)?.message || "Login failed";
+						: (err as { message: string })?.message || "Login failed";
 
 			toast.error(message);
 		}

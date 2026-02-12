@@ -18,7 +18,7 @@ export function renderWithProviders(
 		preloadedState = {},
 		route = "/",
 	}: {
-		preloadedState?: Record<string, any>;
+		preloadedState?: Record<string, unknown>;
 		route?: string;
 	} = {},
 ) {
