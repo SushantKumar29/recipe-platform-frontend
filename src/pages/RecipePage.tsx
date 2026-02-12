@@ -84,7 +84,7 @@ const RecipePage = () => {
 	useEffect(() => {
 		if (selectedRecipe && user && selectedRecipe.ratings) {
 			const userRatingObj = selectedRecipe.ratings.find(
-				(rating: any) => rating.author?._id === user._id,
+				(rating) => rating.author?._id === user._id,
 			);
 
 			if (userRatingObj && id) {
@@ -114,16 +114,18 @@ const RecipePage = () => {
 			await dispatch(addNewComment({ recipeId: id, content })).unwrap();
 			toast.success("Comment added successfully!");
 
-			// Refresh comments to show the new comment on first page
 			setCommentPage(1);
-		} catch (error) {
-			toast.error("Failed to add comment");
+		} catch (error: unknown) {
+			const errorMessage =
+				(error as { message: string })?.message ||
+				error?.toString() ||
+				"Failed to add comment";
+			toast.error(errorMessage);
 		}
 	};
 
 	const handleCommentPageChange = (page: number) => {
 		setCommentPage(page);
-		// Scroll to comments section for better UX
 		setTimeout(() => {
 			document.getElementById("comments-section")?.scrollIntoView({
 				behavior: "smooth",
@@ -167,8 +169,9 @@ const RecipePage = () => {
 					.then(() => {})
 					.catch(() => {});
 			}
-		} catch (error: any) {
-			const errorMessage = error?.message || error?.toString() || "";
+		} catch (error: unknown) {
+			const errorMessage =
+				(error as { message: string })?.message || error?.toString() || "";
 			const isRateLimitError =
 				errorMessage.includes("rate") ||
 				errorMessage.includes("limit") ||
@@ -197,9 +200,11 @@ const RecipePage = () => {
 			await dispatch(deleteRecipe(id)).unwrap();
 			toast.success("Recipe deleted successfully!");
 			navigate("/");
-		} catch (error: any) {
+		} catch (error: unknown) {
 			const errorMessage =
-				error?.message || error?.toString() || "Failed to delete recipe";
+				(error as { message: string })?.message ||
+				error?.toString() ||
+				"Failed to delete recipe";
 			toast.error(errorMessage);
 		} finally {
 			setIsDeleting(false);
@@ -212,7 +217,7 @@ const RecipePage = () => {
 		if (userRating && userRating.recipeId === id) return userRating.value;
 		if (selectedRecipe?.ratings && user) {
 			const userRatingObj = selectedRecipe.ratings.find(
-				(rating: any) => rating.author?._id === user._id,
+				(rating) => rating.author?._id === user._id,
 			);
 			return userRatingObj?.value || 0;
 		}
@@ -223,7 +228,7 @@ const RecipePage = () => {
 		if (userRating && userRating.recipeId === id) return true;
 		if (selectedRecipe?.ratings && user) {
 			return selectedRecipe.ratings.some(
-				(rating: any) => rating.author?._id === user._id,
+				(rating) => rating.author?._id === user._id,
 			);
 		}
 		return false;
@@ -233,7 +238,7 @@ const RecipePage = () => {
 		if (userRating && userRating.recipeId === id) return userRating.value;
 		if (selectedRecipe?.ratings && user) {
 			const userRatingObj = selectedRecipe.ratings.find(
-				(rating: any) => rating.author?._id === user._id,
+				(rating) => rating.author?._id === user._id,
 			);
 			return userRatingObj?.value || 0;
 		}

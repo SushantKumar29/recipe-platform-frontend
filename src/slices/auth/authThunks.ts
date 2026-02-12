@@ -9,10 +9,11 @@ export const registerUser = createAsyncThunk<
 	try {
 		const res = await api.post("/auth/signup", credentials);
 		return res.data;
-	} catch (err: any) {
-		return thunkAPI.rejectWithValue(
-			err.response?.data?.message || "Signup failed",
-		);
+	} catch (err: unknown) {
+		if (err instanceof Error) {
+			return thunkAPI.rejectWithValue(err.message);
+		}
+		return thunkAPI.rejectWithValue("Signup failed");
 	}
 });
 
@@ -23,9 +24,10 @@ export const loginUser = createAsyncThunk<
 	try {
 		const res = await api.post("/auth/login", credentials);
 		return res.data;
-	} catch (err: any) {
-		return thunkAPI.rejectWithValue(
-			err.response?.data?.message || "Login failed",
-		);
+	} catch (err: unknown) {
+		if (err instanceof Error) {
+			return thunkAPI.rejectWithValue(err.message);
+		}
+		return thunkAPI.rejectWithValue("Login failed");
 	}
 });

@@ -130,15 +130,6 @@ const LoginPage = () => {
 							Sign up here
 						</a>
 					</p>
-					<p className='text-xs text-gray-500 mt-2'>
-						Forgot your password?{" "}
-						<a
-							href='/forgot-password'
-							className='text-blue-500 hover:text-blue-700'
-						>
-							Reset it
-						</a>
-					</p>
 				</div>
 			</div>
 		</div>

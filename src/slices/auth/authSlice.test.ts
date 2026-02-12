@@ -12,7 +12,6 @@ describe("authSlice", () => {
 	};
 
 	beforeEach(() => {
-		// Clear localStorage mocks
 		vi.clearAllMocks();
 	});
 

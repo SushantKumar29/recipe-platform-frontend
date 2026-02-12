@@ -145,7 +145,6 @@ describe("LoginPage", () => {
 	it("shows error toast on login failure", async () => {
 		const user = userEvent.setup();
 
-		// Create a proper mock thunk that returns a promise with unwrap
 		const error = new Error("Login failed");
 		const mockPromise = Promise.resolve({ type: "login/rejected", error });
 		(mockPromise as any).unwrap = vi.fn().mockRejectedValue(error);
@@ -176,8 +175,6 @@ describe("LoginPage", () => {
 			expect(mockToastError).toHaveBeenCalled();
 		});
 
-		// The toast should show "Login failed"
-		// (case might be different, use case-insensitive match)
 		expect(mockToastError.mock.calls[0][0].toLowerCase()).toContain(
 			"login failed",
 		);

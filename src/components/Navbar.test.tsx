@@ -69,7 +69,6 @@ describe("Navbar", () => {
 		});
 
 		expect(screen.queryByText("John Doe")).not.toBeInTheDocument();
-		expect(screen.queryByText("Profile")).not.toBeInTheDocument();
 		expect(screen.queryByText("My Recipes")).not.toBeInTheDocument();
 		expect(screen.queryByText("Logout")).not.toBeInTheDocument();
 
@@ -78,9 +77,7 @@ describe("Navbar", () => {
 
 		expect(screen.getByText("John Doe")).toBeInTheDocument();
 		expect(screen.getByText("john@example.com")).toBeInTheDocument();
-		expect(screen.getByText("Profile")).toBeInTheDocument();
 		expect(screen.getByText("My Recipes")).toBeInTheDocument();
-		expect(screen.getByText("Settings")).toBeInTheDocument();
 		expect(screen.getByText("Logout")).toBeInTheDocument();
 	});
 });

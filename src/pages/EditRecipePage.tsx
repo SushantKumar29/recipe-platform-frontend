@@ -4,6 +4,7 @@ import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { fetchRecipeById, updateRecipe } from "@/slices/recipes/recipeThunks";
+import { ArrowLeft } from "lucide-react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -76,11 +77,11 @@ const EditRecipePage = () => {
 
 			toast.success("Recipe updated successfully");
 			navigate(`/recipes/${id}`);
-		} catch (err: any) {
+		} catch (err: unknown) {
 			toast.error(
 				typeof err === "string"
 					? err
-					: err?.message || "Failed to update recipe",
+					: (err as { message: string })?.message || "Failed to update recipe",
 			);
 		}
 	};
@@ -98,123 +99,143 @@ const EditRecipePage = () => {
 	if (!isAuthenticated) return null;
 
 	return (
-		<div className='h-full my-16 py-16 flex items-center justify-center'>
-			<div className='w-full max-w-4xl bg-white border-[#00ff9D] border-t-4 rounded-xl shadow-lg p-6 sm:p-8'>
-				<div className='text-center mb-6'>
-					<h1 className='text-2xl sm:text-3xl font-bold text-gray-900 mb-2'>
-						Edit Recipe
-					</h1>
-				</div>
-
-				{imageUrl && (
-					<div className='mb-4 flex justify-center'>
-						<img
-							src={imageUrl}
-							alt={selectedRecipe.title}
-							className='h-40 rounded-md object-cover'
-						/>
+		<div className='h-full my-12 py-12'>
+			<div className='flex items-center justify-center'>
+				<div className='w-full max-w-4xl'>
+					<div className='mb-4'>
+						<Button
+							type='button'
+							variant='ghost'
+							size='sm'
+							onClick={() => navigate(-1)}
+						>
+							<ArrowLeft /> Back
+						</Button>
 					</div>
-				)}
+					<div className='w-full max-w-4xl bg-white border-[#00ff9D] border-t-4 rounded-xl shadow-lg p-6 sm:p-8'>
+						<div className='text-center mb-6'>
+							<h1 className='text-2xl sm:text-3xl font-bold text-gray-900 mb-2'>
+								Edit Recipe
+							</h1>
+						</div>
 
-				<form onSubmit={handleSubmit(onSubmit)}>
-					<FieldGroup>
-						<Field>
-							<FieldLabel htmlFor='title'>Title</FieldLabel>
-							<Input
-								id='title'
-								{...register("title", {
-									required: "Title is required",
-									maxLength: {
-										value: 100,
-										message: "Max 100 characters",
-									},
-								})}
-							/>
-							{errors.title && (
-								<p className='text-xs text-red-600'>{errors.title.message}</p>
-							)}
-						</Field>
+						{imageUrl && (
+							<div className='mb-4 flex justify-center'>
+								<img
+									src={imageUrl}
+									alt={selectedRecipe.title}
+									className='h-40 rounded-md object-cover'
+								/>
+							</div>
+						)}
 
-						<Field>
-							<FieldLabel htmlFor='ingredients'>Ingredients</FieldLabel>
-							<Textarea
-								id='ingredients'
-								{...register("ingredients", {
-									required: "Ingredients are required",
-									minLength: {
-										value: 10,
-										message: "Add more details",
-									},
-								})}
-							/>
-							{errors.ingredients && (
-								<p className='text-xs text-red-600'>
-									{errors.ingredients.message}
-								</p>
-							)}
-						</Field>
+						<form onSubmit={handleSubmit(onSubmit)}>
+							<FieldGroup>
+								<Field>
+									<FieldLabel htmlFor='title'>Title</FieldLabel>
+									<Input
+										id='title'
+										{...register("title", {
+											required: "Title is required",
+											maxLength: {
+												value: 100,
+												message: "Max 100 characters",
+											},
+										})}
+									/>
+									{errors.title && (
+										<p className='text-xs text-red-600'>
+											{errors.title.message}
+										</p>
+									)}
+								</Field>
 
-						<Field>
-							<FieldLabel htmlFor='preparationTime'>
-								Preparation Time (minutes)
-							</FieldLabel>
-							<Input
-								id='preparationTime'
-								type='number'
-								{...register("preparationTime", {
-									required: "Required",
-									valueAsNumber: true,
-									min: {
-										value: 1,
-										message: "Minimum 1 minute",
-									},
-								})}
-							/>
-							{errors.preparationTime && (
-								<p className='text-xs text-red-600'>
-									{errors.preparationTime.message}
-								</p>
-							)}
-						</Field>
+								<Field>
+									<FieldLabel htmlFor='ingredients'>Ingredients</FieldLabel>
+									<Textarea
+										id='ingredients'
+										{...register("ingredients", {
+											required: "Ingredients are required",
+											minLength: {
+												value: 10,
+												message: "Add more details",
+											},
+										})}
+									/>
+									{errors.ingredients && (
+										<p className='text-xs text-red-600'>
+											{errors.ingredients.message}
+										</p>
+									)}
+								</Field>
 
-						<Field>
-							<FieldLabel htmlFor='steps'>Steps</FieldLabel>
-							<Textarea
-								id='steps'
-								{...register("steps", {
-									required: "Steps are required",
-									minLength: {
-										value: 20,
-										message: "Too short",
-									},
-								})}
-							/>
-							{errors.steps && (
-								<p className='text-xs text-red-600'>{errors.steps.message}</p>
-							)}
-						</Field>
+								<Field>
+									<FieldLabel htmlFor='preparationTime'>
+										Preparation Time (minutes)
+									</FieldLabel>
+									<Input
+										id='preparationTime'
+										type='number'
+										{...register("preparationTime", {
+											required: "Required",
+											valueAsNumber: true,
+											min: {
+												value: 1,
+												message: "Minimum 1 minute",
+											},
+										})}
+									/>
+									{errors.preparationTime && (
+										<p className='text-xs text-red-600'>
+											{errors.preparationTime.message}
+										</p>
+									)}
+								</Field>
 
-						<Field>
-							<FieldLabel htmlFor='image'>Replace Image (optional)</FieldLabel>
-							<Input
-								id='image'
-								type='file'
-								accept='image/*'
-								{...register("image")}
-							/>
-						</Field>
+								<Field>
+									<FieldLabel htmlFor='steps'>Steps</FieldLabel>
+									<Textarea
+										id='steps'
+										{...register("steps", {
+											required: "Steps are required",
+											minLength: {
+												value: 20,
+												message: "Too short",
+											},
+										})}
+									/>
+									{errors.steps && (
+										<p className='text-xs text-red-600'>
+											{errors.steps.message}
+										</p>
+									)}
+								</Field>
 
-						<Field className='mt-6'>
-							<Button
-								type='submit'
-								disabled={isSubmitting}
-								className='w-full sm:w-auto'
-							>
-								{isSubmitting ? "Updating..." : "Update Recipe"}
-							</Button>
-						</Field>
-					</FieldGroup>
-				</form>
+								<Field>
+									<FieldLabel htmlFor='image'>
+										Replace Image (optional)
+									</FieldLabel>
+									<Input
+										id='image'
+										type='file'
+										accept='image/*'
+										{...register("image")}
+									/>
+								</Field>
+
+								<Field className='mt-6'>
+									<Button
+										type='submit'
+										disabled={isSubmitting}
+										className='w-full sm:w-auto'
+									>
+										{isSubmitting ? "Updating..." : "Update Recipe"}
+									</Button>
+								</Field>
+							</FieldGroup>
+						</form>
+					</div>
+				</div>
 			</div>
 		</div>
 	);

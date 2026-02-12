@@ -22,7 +22,7 @@ interface RecipeCommentsProps {
 		totalComments: number;
 		limit: number;
 	} | null;
-	onPageChange: (page: number) => void; // Changed from onLoadMore
+	onPageChange: (page: number) => void;
 	onAddComment: (content: string) => Promise<void>;
 }
 
@@ -73,8 +73,12 @@ const RecipeComments = ({
 
 			toast.success("Comment updated successfully");
 			setEditingCommentId(null);
-		} catch (error: any) {
-			toast.error(error.message || "Failed to update comment");
+		} catch (error: unknown) {
+			toast.error(
+				(error as { message: string })?.message ||
+					error?.toString() ||
+					"Failed to update comment",
+			);
 		}
 	};
 
@@ -88,8 +92,12 @@ const RecipeComments = ({
 
 			toast.success("Comment deleted successfully");
 			setShowMenuForComment(null);
-		} catch (error: any) {
-			toast.error(error.message || "Failed to delete comment");
+		} catch (error: unknown) {
+			toast.error(
+				(error as { message: string })?.message ||
+					error?.toString() ||
+					"Failed to delete comment",
+			);
 		}
 	};
 
@@ -125,17 +133,26 @@ const RecipeComments = ({
 		});
 	};
 
+	const hasUserCommented = () =>
+		comments.some((comment) => comment.author?._id === user?._id);
+
+	const commentingEnabeled = isAuthenticated && !hasUserCommented();
+
 	return (
 		<div className='mt-8'>
 			<h3 className='text-lg font-semibold text-gray-900 mb-3'>
 				Comments ({commentsPagination?.totalComments || 0})
 			</h3>
 
-			{isAuthenticated && (
-				<div className='mb-6'>
+			<div className='mb-6'>
+				{(commentingEnabeled && (
 					<CommentForm onSubmit={onAddComment} disabled={commentsLoading} />
-				</div>
-			)}
+				)) || (
+					<p className='text-sm text-gray-600'>
+						You have already commented on this recipe
+					</p>
+				)}
+			</div>
 
 			{commentsLoading && comments.length === 0 ? (
 				<Loader />

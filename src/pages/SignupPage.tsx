@@ -35,8 +35,8 @@ const SignupPage = () => {
 		try {
 			await dispatch(registerUser(data)).unwrap();
 			toast.success(JSON.stringify(data));
-		} catch (err: any) {
-			toast.error(err?.message || "Signup failed");
+		} catch (err: unknown) {
+			toast.error((err as { message: string })?.message || "Signup failed");
 		}
 	};
 
@@ -163,15 +163,6 @@ const SignupPage = () => {
 							className='text-blue-600 hover:text-blue-800 font-medium'
 						>
 							Login here
-						</a>
-					</p>
-					<p className='text-xs text-gray-500 mt-2'>
-						Forgot your password?{" "}
-						<a
-							href='/forgot-password'
-							className='text-blue-500 hover:text-blue-700'
-						>
-							Reset it
 						</a>
 					</p>
 				</div>

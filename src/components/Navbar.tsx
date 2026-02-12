@@ -62,25 +62,11 @@ const Navbar = () => {
 									</div>
 									<div className='py-1'>
 										<Link
-											to='/profile'
-											className='block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
-											onClick={() => setDropdownOpen(false)}
-										>
-											Profile
-										</Link>
-										<Link
 											to='/my-recipes'
 											className='block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
 											onClick={() => setDropdownOpen(false)}
 										>
 											My Recipes
-										</Link>
-										<Link
-											to='/settings'
-											className='block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
-											onClick={() => setDropdownOpen(false)}
-										>
-											Settings
 										</Link>
 									</div>
 									<div className='border-t border-gray-100 py-1'>

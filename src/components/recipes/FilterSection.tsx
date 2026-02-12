@@ -20,7 +20,7 @@ interface FilterSectionProps {
 		sortOrder: string;
 		authorId?: string;
 	};
-	onFilterChange: (key: keyof RecipeFilters, value: any) => void;
+	onFilterChange: (key: keyof RecipeFilters, value: number | string) => void;
 	onClearFilters: () => void;
 	hasActiveFilters: boolean;
 }

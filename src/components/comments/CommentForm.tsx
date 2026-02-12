@@ -10,13 +10,13 @@ const CommentForm = ({ onSubmit, disabled = false }: CommentFormProps) => {
 	const [content, setContent] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	const handleSubmit = async (e: React.FormEvent) => {
+	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!content.trim() || isSubmitting || disabled) return;
 
 		setIsSubmitting(true);
 		try {
-			await onSubmit(content.trim());
+			onSubmit(content.trim());
 			setContent("");
 		} finally {
 			setIsSubmitting(false);

@@ -47,13 +47,16 @@ const RecipeList = ({
 
 	const lastRequestParamsRef = useRef<string>("");
 
-	const updateFilter = useCallback((key: keyof RecipeFilters, value: any) => {
-		setFilters((prev) => ({ ...prev, [key]: value }));
-		setPage(1);
-	}, []);
+	const updateFilter = useCallback(
+		(key: keyof RecipeFilters, value: number | string) => {
+			setFilters((prev) => ({ ...prev, [key]: value }));
+			setPage(1);
+		},
+		[],
+	);
 
 	const requestParams = useMemo(() => {
-		const params: any = {
+		const params: { [key: string]: string | number | undefined } = {
 			page,
 			limit,
 			sortBy: filters.sortBy,

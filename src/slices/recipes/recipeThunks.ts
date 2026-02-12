@@ -1,5 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import api from "@/lib/axios";
 import {
 	fetchStart,
@@ -42,7 +42,7 @@ export const fetchRecipes = createAsyncThunk(
 		try {
 			dispatch(fetchStart());
 
-			const queryParams: any = {};
+			const queryParams: Record<string, string | number> = {};
 
 			if (params?.search) queryParams.search = params.search;
 			if (params?.authorId) queryParams.authorId = params.authorId;
@@ -75,7 +75,7 @@ export const fetchRecipes = createAsyncThunk(
 			}
 
 			return responseData;
-		} catch (error: any) {
+		} catch (error: unknown) {
 			if (axios.isAxiosError(error) && error.response?.status === 429) {
 				dispatch(rateLimited());
 			} else {
@@ -93,7 +93,7 @@ export const fetchRecipeById = createAsyncThunk(
 			dispatch(fetchStart());
 			const res = await api.get(`/recipes/${id}`);
 			dispatch(setRecipeDetail(res.data));
-		} catch (error: any) {
+		} catch (error: unknown) {
 			if (axios.isAxiosError(error) && error.response?.status === 429) {
 				dispatch(rateLimited());
 			} else {
@@ -141,7 +141,7 @@ export const fetchRecipeComments = createAsyncThunk(
 					pagination: responseData.pagination,
 				}),
 			);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			if (axios.isAxiosError(error) && error.response?.status === 429) {
 				dispatch(rateLimited());
 			} else {
@@ -162,10 +162,13 @@ export const createRecipe = createAsyncThunk(
 				},
 			});
 			return response.data;
-		} catch (error: any) {
-			return rejectWithValue(
-				error?.response?.data?.message || "Failed to create recipe",
-			);
+		} catch (error) {
+			if (error instanceof AxiosError) {
+				return rejectWithValue(
+					error.response?.data?.message || "Failed to create recipe",
+				);
+			}
+			return rejectWithValue("Failed to create recipe");
 		}
 	},
 );
@@ -180,10 +183,13 @@ export const updateRecipe = createAsyncThunk(
 				},
 			});
 			return response.data;
-		} catch (error: any) {
-			return rejectWithValue(
-				error?.response?.data?.message || "Failed to update recipe",
-			);
+		} catch (error: unknown) {
+			if (error instanceof AxiosError) {
+				return rejectWithValue(
+					error.response?.data?.message || "Failed to update recipe",
+				);
+			}
+			return rejectWithValue("Failed to update recipe");
 		}
 	},
 );
@@ -194,10 +200,13 @@ export const deleteRecipe = createAsyncThunk(
 		try {
 			const response = await api.delete(`/recipes/${id}`);
 			return response.data;
-		} catch (error: any) {
-			return rejectWithValue(
-				error?.response?.data?.message || "Failed to delete recipe",
-			);
+		} catch (error: unknown) {
+			if (error instanceof AxiosError) {
+				return rejectWithValue(
+					error.response?.data?.message || "Failed to delete recipe",
+				);
+			}
+			return rejectWithValue("Failed to delete recipe");
 		}
 	},
 );
@@ -211,10 +220,13 @@ export const rateRecipe = createAsyncThunk(
 		try {
 			const response = await api.post(`/recipes/${recipeId}/rate`, { value });
 			return response.data;
-		} catch (error: any) {
-			return rejectWithValue(
-				error.response?.data?.message || "Failed to rate recipe",
-			);
+		} catch (error: unknown) {
+			if (error instanceof AxiosError) {
+				return rejectWithValue(
+					error.response?.data?.message || "Failed to rate recipe",
+				);
+			}
+			return rejectWithValue("Failed to rate recipe");
 		}
 	},
 );
@@ -229,7 +241,7 @@ export const addNewComment = createAsyncThunk(
 
 			dispatch(addComment(res.data.comment));
 			return res.data.comment;
-		} catch (error: any) {
+		} catch (error: unknown) {
 			if (axios.isAxiosError(error) && error.response?.status === 429) {
 				dispatch(rateLimited());
 			}
@@ -253,13 +265,16 @@ export const updateRecipeComment = createAsyncThunk(
 
 			dispatch(updateComment(res.data.comment));
 			return res.data.comment;
-		} catch (error: any) {
+		} catch (error: unknown) {
 			if (axios.isAxiosError(error) && error.response?.status === 429) {
 				dispatch(rateLimited());
 			}
-			return rejectWithValue(
-				error.response?.data?.message || "Failed to update comment",
-			);
+			if (error instanceof AxiosError) {
+				return rejectWithValue(
+					error.response?.data?.message || "Failed to update comment",
+				);
+			}
+			return rejectWithValue("Failed to update comment");
 		} finally {
 			dispatch(setUpdatingCommentId(null));
 		}
@@ -276,13 +291,16 @@ export const deleteRecipeComment = createAsyncThunk(
 
 			dispatch(deleteComment(commentId));
 			return commentId;
-		} catch (error: any) {
+		} catch (error: unknown) {
 			if (axios.isAxiosError(error) && error.response?.status === 429) {
 				dispatch(rateLimited());
 			}
-			return rejectWithValue(
-				error.response?.data?.message || "Failed to delete comment",
-			);
+			if (error instanceof AxiosError) {
+				return rejectWithValue(
+					error.response?.data?.message || "Failed to delete comment",
+				);
+			}
+			return rejectWithValue("Failed to delete comment");
 		} finally {
 			dispatch(setDeletingCommentId(null));
 		}
