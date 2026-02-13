@@ -17,15 +17,10 @@ import { Button } from "../ui/button";
 
 interface RecipeListProps {
 	title?: string;
-	showNewRecipeButton?: boolean;
 	authorId?: string;
 }
 
-const RecipeList = ({
-	title,
-	showNewRecipeButton = false,
-	authorId = "",
-}: RecipeListProps) => {
+const RecipeList = ({ title, authorId = "" }: RecipeListProps) => {
 	const dispatch = useDispatch<AppDispatch>();
 
 	const { items, loading, isRateLimited, pagination } = useSelector(
@@ -147,74 +142,74 @@ const RecipeList = ({
 
 	return (
 		<div className='h-full'>
-			{isRateLimited && <RateLimitedUI />}
-
-			<div className='max-w-7xl mx-auto p-4 mt-6'>
-				<div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6'>
-					{title && (
-						<h1 className='text-2xl font-bold text-gray-900'>{title}</h1>
-					)}
-
-					<div className='flex items-center gap-4'>
-						{showNewRecipeButton && isAuthenticated && (
-							<Link to={"/new-recipe"}>
-								<Button className='cursor-pointer  bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors'>
-									<span>New Recipe</span>
-								</Button>
-							</Link>
+			{(isRateLimited && <RateLimitedUI />) || (
+				<div className='max-w-7xl mx-auto p-4 mt-6'>
+					<div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6'>
+						{title && (
+							<h1 className='text-2xl font-bold text-gray-900'>{title}</h1>
 						)}
+
+						<div className='flex items-center gap-4'>
+							{isAuthenticated && (
+								<Link to={"/new-recipe"}>
+									<Button className='cursor-pointer  bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors'>
+										<span>New Recipe</span>
+									</Button>
+								</Link>
+							)}
+						</div>
 					</div>
-				</div>
 
-				<div className='mb-6'>
-					<SearchInput
-						value={searchInput}
-						onSearch={handleSearchInput}
-						placeholder='Search recipes by title or description...'
-					/>
-				</div>
-
-				<div className='flex flex-col lg:flex-row gap-6'>
-					<div className='lg:w-1/4'>
-						<FilterSection
-							filters={filters}
-							onFilterChange={updateFilter}
-							onClearFilters={handleClearFilters}
-							hasActiveFilters={hasActiveFilters() as boolean}
+					<div className='mb-6'>
+						<SearchInput
+							value={searchInput}
+							onSearch={handleSearchInput}
+							placeholder='Search recipes by title or description...'
 						/>
 					</div>
 
-					<div className='lg:w-3/4'>
-						{pagination && (
-							<div className='mb-4 text-sm text-gray-600'>
-								Showing {items.length} of {pagination.total} recipes
-								{pagination.pages > 1 &&
-									` • Page ${pagination.page} of ${pagination.pages}`}
-							</div>
-						)}
+					<div className='flex flex-col lg:flex-row gap-6'>
+						<div className='lg:w-1/4'>
+							<FilterSection
+								filters={filters}
+								onFilterChange={updateFilter}
+								onClearFilters={handleClearFilters}
+								hasActiveFilters={hasActiveFilters() as boolean}
+							/>
+						</div>
 
-						{!isRateLimited && items.length === 0 && <RecipesNotFound />}
-
-						{!isRateLimited && items.length > 0 && (
-							<>
-								<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-									{items.map((recipe) => (
-										<RecipeCard key={recipe._id} recipe={recipe} />
-									))}
+						<div className='lg:w-3/4'>
+							{pagination && (
+								<div className='mb-4 text-sm text-gray-600'>
+									Showing {items.length} of {pagination.total} recipes
+									{pagination.pages > 1 &&
+										` • Page ${pagination.page} of ${pagination.pages}`}
 								</div>
+							)}
 
-								{pagination && pagination.pages > 1 && (
-									<Pagination
-										currentPage={pagination.page}
-										totalPages={pagination.pages}
-										onPageChange={setPage}
-									/>
-								)}
-							</>
-						)}
+							{!isRateLimited && items.length === 0 && <RecipesNotFound />}
+
+							{!isRateLimited && items.length > 0 && (
+								<>
+									<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+										{items.map((recipe) => (
+											<RecipeCard key={recipe._id} recipe={recipe} />
+										))}
+									</div>
+
+									{pagination && pagination.pages > 1 && (
+										<Pagination
+											currentPage={pagination.page}
+											totalPages={pagination.pages}
+											onPageChange={setPage}
+										/>
+									)}
+								</>
+							)}
+						</div>
 					</div>
 				</div>
-			</div>
+			)}
 		</div>
 	);
 };

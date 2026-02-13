@@ -24,6 +24,5 @@ describe("HomePage", () => {
 
 		expect(screen.getByTestId("recipe-list")).toBeInTheDocument();
 		expect(screen.getByText("All Recipes")).toBeInTheDocument();
-		expect(screen.getByTestId("show-new-recipe")).toHaveTextContent("true");
 	});
 });

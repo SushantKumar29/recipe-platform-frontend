@@ -12,13 +12,7 @@ const MyRecipesPage = () => {
 		return <Navigate to='/login' replace />;
 	}
 
-	return (
-		<RecipeList
-			title='My Recipes'
-			showNewRecipeButton={true}
-			authorId={user?._id}
-		/>
-	);
+	return <RecipeList title='My Recipes' authorId={user?._id} />;
 };
 
 export default MyRecipesPage;
