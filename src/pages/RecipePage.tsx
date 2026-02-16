@@ -4,7 +4,6 @@ import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
 import { EditIcon, Star, Trash2Icon } from "lucide-react";
 
-import RateLimitedUI from "@/components/RateLimitedUI";
 import Loader from "@/components/shared/Loader";
 import RecipeComments from "@/components/comments/RecipeComments";
 
@@ -41,7 +40,6 @@ const RecipePage = () => {
 	const {
 		selectedRecipe,
 		loading,
-		isRateLimited,
 		comments,
 		commentsLoading,
 		commentsPagination,
@@ -257,9 +255,7 @@ const RecipePage = () => {
 
 	return (
 		<div className='h-full'>
-			{isRateLimited && <RateLimitedUI />}
-
-			{!isRateLimited && selectedRecipe && (
+			{selectedRecipe && (
 				<div className='bg-white rounded-lg shadow-md max-w-7xl mx-auto p-4 my-6'>
 					{showDeleteConfirm && (
 						<div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>

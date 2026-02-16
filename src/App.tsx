@@ -1,55 +1,20 @@
-import { Route, Routes } from "react-router";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import ProtectedRoute from "@/components/ProtectedRoute";
-import LoginPage from "@/pages/LoginPage";
-import HomePage from "@/pages/HomePage";
-import RecipePage from "@/pages/RecipePage";
-import NewRecipePage from "@/pages/NewRecipePage";
-import MyRecipesPage from "@/pages/MyRecipesPage";
-import SignupPage from "./pages/SignupPage";
-import EditRecipePage from "./pages/EditRecipePage";
+import AppRoutes from "@/router/AppRoutes";
+import RateLimitedUI from "@/components/RateLimitedUI";
+import { useSelector } from "react-redux";
+import type { RootState } from "./app/store";
 
 const App = () => {
+	const { isRateLimited } = useSelector((state: RootState) => state.recipes);
 	return (
 		<div className='min-h-screen flex flex-col'>
 			<Navbar />
 
 			<main className='flex-1'>
-				<Routes>
-					<Route path='/' element={<HomePage />} />
-					<Route path='/login' element={<LoginPage />} />
-					<Route path='signup' element={<SignupPage />} />
-					<Route path='/recipes' element={<HomePage />} />
-					<Route path='/recipes/:id' element={<RecipePage />} />
-
-					<Route
-						path='/new-recipe'
-						element={
-							<ProtectedRoute>
-								<NewRecipePage />
-							</ProtectedRoute>
-						}
-					/>
-
-					<Route
-						path='/my-recipes'
-						element={
-							<ProtectedRoute>
-								<MyRecipesPage />
-							</ProtectedRoute>
-						}
-					/>
-
-					<Route
-						path='/recipes/:id/edit'
-						element={
-							<ProtectedRoute>
-								<EditRecipePage />
-							</ProtectedRoute>
-						}
-					/>
-				</Routes>
+				<div className='h-full'>
+					{(isRateLimited && <RateLimitedUI />) || <AppRoutes />}
+				</div>
 			</main>
 
 			<Footer />
