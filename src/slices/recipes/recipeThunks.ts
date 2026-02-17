@@ -23,6 +23,7 @@ import type {
 	DeleteCommentData,
 	CommentResponse,
 } from "@/types/comments/commentTypes";
+import { camelizeKeys } from "@/lib/formatters";
 
 export const fetchRecipes = createAsyncThunk(
 	"recipes/fetchAll",
@@ -74,7 +75,7 @@ export const fetchRecipes = createAsyncThunk(
 				);
 			}
 
-			return responseData;
+			return camelizeKeys(responseData);
 		} catch (error: unknown) {
 			if (axios.isAxiosError(error) && error.response?.status === 429) {
 				dispatch(rateLimited());
@@ -137,7 +138,7 @@ export const fetchRecipeComments = createAsyncThunk(
 			const responseData = res.data as CommentResponse;
 			dispatch(
 				setComments({
-					comments: responseData.comments,
+					comments: camelizeKeys(responseData.comments),
 					pagination: responseData.pagination,
 				}),
 			);
@@ -161,7 +162,7 @@ export const createRecipe = createAsyncThunk(
 					"Content-Type": "multipart/form-data",
 				},
 			});
-			return response.data;
+			return camelizeKeys(response.data);
 		} catch (error) {
 			if (error instanceof AxiosError) {
 				return rejectWithValue(
@@ -182,7 +183,7 @@ export const updateRecipe = createAsyncThunk(
 					"Content-Type": "multipart/form-data",
 				},
 			});
-			return response.data;
+			return camelizeKeys(response.data);
 		} catch (error: unknown) {
 			if (error instanceof AxiosError) {
 				return rejectWithValue(
@@ -199,7 +200,7 @@ export const deleteRecipe = createAsyncThunk(
 	async (id: string, { rejectWithValue }) => {
 		try {
 			const response = await api.delete(`/recipes/${id}`);
-			return response.data;
+			return camelizeKeys(response.data);
 		} catch (error: unknown) {
 			if (error instanceof AxiosError) {
 				return rejectWithValue(
@@ -219,7 +220,7 @@ export const rateRecipe = createAsyncThunk(
 	) => {
 		try {
 			const response = await api.post(`/recipes/${recipeId}/rate`, { value });
-			return response.data;
+			return camelizeKeys(response.data);
 		} catch (error: unknown) {
 			if (error instanceof AxiosError) {
 				return rejectWithValue(
@@ -240,7 +241,7 @@ export const addNewComment = createAsyncThunk(
 			});
 
 			dispatch(addComment(res.data.comment));
-			return res.data.comment;
+			return camelizeKeys(res.data.comment);
 		} catch (error: unknown) {
 			if (axios.isAxiosError(error) && error.response?.status === 429) {
 				dispatch(rateLimited());

@@ -3,14 +3,14 @@ import { http, HttpResponse } from "msw";
 export const handlers = [
 	http.post("*/auth/login", () => {
 		return HttpResponse.json({
-			user: { _id: "1", name: "Test User", email: "test@example.com" },
+			user: { id: "1", name: "Test User", email: "test@example.com" },
 			token: "fake-jwt-token",
 		});
 	}),
 
 	http.post("*/auth/signup", () => {
 		return HttpResponse.json({
-			user: { _id: "1", name: "Test User", email: "test@example.com" },
+			user: { id: "1", name: "Test User", email: "test@example.com" },
 			token: "fake-jwt-token",
 		});
 	}),
@@ -19,12 +19,12 @@ export const handlers = [
 		return HttpResponse.json({
 			data: [
 				{
-					_id: "1",
+					id: "1",
 					title: "Test Recipe",
 					ingredients: ["Ingredient 1", "Ingredient 2"],
 					steps: ["Step 1", "Step 2"],
 					author: {
-						_id: "user1",
+						id: "user1",
 						name: "Test User",
 						email: "test@example.com",
 					},
@@ -48,11 +48,11 @@ export const handlers = [
 	http.get("*/recipes/:id", ({ params }: { params: { id: string } }) => {
 		const { id } = params;
 		return HttpResponse.json({
-			_id: id,
+			id: id,
 			title: "Test Recipe Detail",
 			ingredients: ["Ingredient 1", "Ingredient 2"],
 			steps: ["Step 1", "Step 2"],
-			author: { _id: "user1", name: "Test User", email: "test@example.com" },
+			author: { id: "user1", name: "Test User", email: "test@example.com" },
 			isPublished: true,
 			createdAt: "2024-01-01",
 			updatedAt: "2024-01-01",
@@ -65,7 +65,7 @@ export const handlers = [
 
 	http.post("*/recipes", () => {
 		return HttpResponse.json({
-			_id: "new-recipe-id",
+			id: "new-recipe-id",
 			title: "New Recipe",
 			message: "Recipe created successfully",
 		});
@@ -87,10 +87,10 @@ export const handlers = [
 		return HttpResponse.json({
 			comments: [
 				{
-					_id: "comment1",
+					id: "comment1",
 					content: "Great recipe!",
 					author: {
-						_id: "user1",
+						id: "user1",
 						name: "Test User",
 						email: "test@example.com",
 					},
@@ -113,9 +113,9 @@ export const handlers = [
 	http.post("*/recipes/:id/comments", () => {
 		return HttpResponse.json({
 			comment: {
-				_id: "new-comment",
+				id: "new-comment",
 				content: "New comment",
-				author: { _id: "user1", name: "Test User", email: "test@example.com" },
+				author: { id: "user1", name: "Test User", email: "test@example.com" },
 				recipe: "1",
 				createdAt: "2024-01-01",
 				updatedAt: "2024-01-01",

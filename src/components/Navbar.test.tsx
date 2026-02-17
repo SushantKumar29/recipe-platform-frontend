@@ -35,7 +35,7 @@ describe("Navbar", () => {
 		renderWithProviders(<Navbar />, {
 			preloadedState: {
 				auth: {
-					user: { _id: "1", name: "John Doe", email: "john@example.com" },
+					user: { id: "1", name: "John Doe", email: "john@example.com" },
 					token: "fake-token",
 					isAuthenticated: true,
 					loading: false,
@@ -59,7 +59,7 @@ describe("Navbar", () => {
 		renderWithProviders(<Navbar />, {
 			preloadedState: {
 				auth: {
-					user: { _id: "1", name: "John Doe", email: "john@example.com" },
+					user: { id: "1", name: "John Doe", email: "john@example.com" },
 					token: "fake-token",
 					isAuthenticated: true,
 					loading: false,

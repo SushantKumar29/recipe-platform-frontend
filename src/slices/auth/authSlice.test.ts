@@ -27,7 +27,7 @@ describe("authSlice", () => {
 
 	it("should handle setAuthUser", () => {
 		const user: User = {
-			_id: "1",
+			id: "1",
 			name: "Test User",
 			email: "test@example.com",
 		};
@@ -44,7 +44,7 @@ describe("authSlice", () => {
 
 	it("should handle logout", () => {
 		const loggedInState: AuthState = {
-			user: { _id: "1", name: "Test User", email: "test@example.com" },
+			user: { id: "1", name: "Test User", email: "test@example.com" },
 			token: "fake-token",
 			isAuthenticated: true,
 			loading: false,

@@ -1,6 +1,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import api from "@/lib/axios";
 import type { User } from "./authTypes";
+import { camelizeKeys } from "@/lib/formatters";
 
 export const registerUser = createAsyncThunk<
 	{ user: User; token: string },
@@ -23,7 +24,7 @@ export const loginUser = createAsyncThunk<
 >("auth/login", async (credentials, thunkAPI) => {
 	try {
 		const res = await api.post("/auth/login", credentials);
-		return res.data;
+		return camelizeKeys(res.data);
 	} catch (err: unknown) {
 		if (err instanceof Error) {
 			return thunkAPI.rejectWithValue(err.message);

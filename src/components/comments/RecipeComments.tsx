@@ -48,11 +48,11 @@ const RecipeComments = ({
 
 	const isCommentOwner = (comment: Comment) => {
 		if (!user || !comment.author) return false;
-		return comment.author._id === user._id;
+		return comment.author.id === user.id;
 	};
 
 	const handleStartEdit = (comment: Comment) => {
-		setEditingCommentId(comment._id);
+		setEditingCommentId(comment.id);
 		setShowMenuForComment(null);
 	};
 
@@ -134,7 +134,7 @@ const RecipeComments = ({
 	};
 
 	const hasUserCommented = () =>
-		comments.some((comment) => comment.author?._id === user?._id);
+		comments.some((comment) => comment.author?.id === user?.id);
 
 	const commentingEnabeled = isAuthenticated && !hasUserCommented();
 
@@ -161,13 +161,13 @@ const RecipeComments = ({
 					<div className='space-y-4'>
 						{comments.map((comment) => {
 							const isOwner = isCommentOwner(comment);
-							const isEditing = editingCommentId === comment._id;
-							const isUpdating = updatingCommentId === comment._id;
-							const isDeleting = deletingCommentId === comment._id;
+							const isEditing = editingCommentId === comment.id;
+							const isUpdating = updatingCommentId === comment.id;
+							const isDeleting = deletingCommentId === comment.id;
 
 							return (
 								<div
-									key={comment._id}
+									key={comment.id}
 									className='border rounded-xl px-4 py-3 hover:shadow-sm transition-shadow'
 								>
 									<div className='flex items-start justify-between mb-2'>
@@ -198,9 +198,9 @@ const RecipeComments = ({
 												<button
 													onClick={() =>
 														setShowMenuForComment(
-															showMenuForComment === comment._id
+															showMenuForComment === comment.id
 																? null
-																: comment._id,
+																: comment.id,
 														)
 													}
 													className='p-1 hover:bg-gray-100 rounded'
@@ -209,7 +209,7 @@ const RecipeComments = ({
 													<MoreVertical size={18} />
 												</button>
 
-												{showMenuForComment === comment._id && (
+												{showMenuForComment === comment.id && (
 													<div className='absolute right-0 mt-1 w-40 bg-white border rounded-lg shadow-lg z-10'>
 														<button
 															onClick={() => handleStartEdit(comment)}
@@ -220,7 +220,7 @@ const RecipeComments = ({
 															Edit
 														</button>
 														<button
-															onClick={() => handleDeleteComment(comment._id)}
+															onClick={() => handleDeleteComment(comment.id)}
 															className='flex items-center w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50'
 															disabled={isUpdating || isDeleting}
 														>

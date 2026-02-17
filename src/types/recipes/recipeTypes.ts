@@ -1,7 +1,7 @@
 import type { User } from "@/types/users/userTypes";
 
 export interface Rating {
-	_id: string;
+	id: string;
 	value: number;
 	author: User;
 	recipe: string;
@@ -10,24 +10,23 @@ export interface Rating {
 }
 
 export interface Recipe {
-	_id: string;
+	id: string;
 	title: string;
 	ingredients: string[];
 	steps: string[];
 	image?: string | { url: string; publicId: string };
 	author: string | User;
 	isPublished: boolean;
-	createdAt: string;
-	updatedAt: string;
-	__v?: number;
-	ratingCount: number;
-	averageRating: number;
 	preparationTime: number;
+	createdAt?: string;
+	updatedAt?: string;
+	__v?: number;
+	ratingCount?: number;
+	averageRating?: number;
 }
 
 export interface RecipeDetail extends Recipe {
 	ratings: Rating[];
-	id?: string;
 	averageRating: number;
 	ratingCount: number;
 	userRating?: number;

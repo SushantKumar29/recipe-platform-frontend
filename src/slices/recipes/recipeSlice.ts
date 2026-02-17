@@ -133,7 +133,7 @@ const recipeSlice = createSlice({
 
 		updateComment(state, action: PayloadAction<Comment>) {
 			const index = state.comments.findIndex(
-				(comment) => comment._id === action.payload._id,
+				(comment) => comment.id === action.payload.id,
 			);
 			if (index !== -1) {
 				state.comments[index] = action.payload;
@@ -143,7 +143,7 @@ const recipeSlice = createSlice({
 
 		deleteComment(state, action: PayloadAction<string>) {
 			state.comments = state.comments.filter(
-				(comment) => comment._id !== action.payload,
+				(comment) => comment.id !== action.payload,
 			);
 			if (state.commentsPagination) {
 				state.commentsPagination.totalComments -= 1;

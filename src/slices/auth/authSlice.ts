@@ -53,7 +53,6 @@ const authSlice = createSlice({
 	extraReducers: (builder) => {
 		builder
 
-			// SIGNUP
 			.addMatcher(
 				(action): action is PayloadAction<{ user: User; token: string }> =>
 					action.type === "auth/signup/fulfilled",
@@ -86,7 +85,6 @@ const authSlice = createSlice({
 				},
 			)
 
-			// LOGIN
 			.addMatcher(
 				(action): action is PayloadAction<{ user: User; token: string }> =>
 					action.type === "auth/login/fulfilled",

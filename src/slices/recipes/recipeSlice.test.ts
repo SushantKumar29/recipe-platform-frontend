@@ -29,7 +29,7 @@ describe("recipeSlice", () => {
 	};
 
 	const mockRecipe: Recipe = {
-		_id: "1",
+		id: "1",
 		title: "Test Recipe",
 		ingredients: ["Ingredient 1", "Ingredient 2"],
 		steps: ["Step 1", "Step 2"],
@@ -44,14 +44,14 @@ describe("recipeSlice", () => {
 
 	const mockRecipeDetail: RecipeDetail = {
 		...mockRecipe,
-		author: { _id: "author1", name: "Test Author", email: "author@test.com" },
+		author: { id: "author1", name: "Test Author", email: "author@test.com" },
 		ratings: [],
 	};
 
 	const mockComment: Comment = {
-		_id: "comment1",
+		id: "comment1",
 		content: "Great recipe!",
-		author: { _id: "user1", name: "Test User", email: "test@example.com" },
+		author: { id: "user1", name: "Test User", email: "test@example.com" },
 		recipe: "1",
 		createdAt: "2024-01-01",
 		updatedAt: "2024-01-01",
@@ -166,9 +166,9 @@ describe("recipeSlice", () => {
 
 	it("should handle addComment", () => {
 		const newComment: Comment = {
-			_id: "comment2",
+			id: "comment2",
 			content: "Another great recipe!",
-			author: { _id: "user2", name: "Another User", email: "another@test.com" },
+			author: { id: "user2", name: "Another User", email: "another@test.com" },
 			recipe: "1",
 			createdAt: "2024-01-02",
 			updatedAt: "2024-01-02",

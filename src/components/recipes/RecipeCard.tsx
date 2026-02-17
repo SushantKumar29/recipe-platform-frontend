@@ -57,7 +57,7 @@ const RecipeCard = ({ recipe }: RecipeCardProps) => {
 					>
 						<Star className='w-3 h-3 fill-yellow-400 text-yellow-400' />
 						<span className='font-semibold'>
-							{recipe.averageRating.toFixed(1)}
+							{recipe.averageRating?.toFixed(1)}
 						</span>
 						<span className='text-gray-500 text-xs'>
 							({recipe.ratingCount})
@@ -78,7 +78,7 @@ const RecipeCard = ({ recipe }: RecipeCardProps) => {
 			</CardHeader>
 
 			<CardFooter className='flex justify-end pt-0'>
-				<Link to={`/recipes/${recipe._id}`}>
+				<Link to={`/recipes/${recipe.id}`}>
 					<Button className='ml-auto font-semibold bg-green-600 hover:bg-green-700'>
 						View Recipe
 					</Button>

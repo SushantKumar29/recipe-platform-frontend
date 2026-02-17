@@ -1,12 +1,12 @@
 import type { User } from "../users/userTypes";
 
 export interface Comment {
-	_id: string;
+	id: string;
 	content: string;
 	author: User;
 	recipe: string;
-	createdAt: string;
-	updatedAt: string;
+	createdAt?: string;
+	updatedAt?: string;
 }
 
 export interface CommentResponse {

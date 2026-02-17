@@ -68,7 +68,7 @@ describe("SignupPage", () => {
 		renderWithProviders(<SignupPage />, {
 			preloadedState: {
 				auth: {
-					user: { _id: "1", name: "Test User", email: "test@example.com" },
+					user: { id: "1", name: "Test User", email: "test@example.com" },
 					token: "fake-token",
 					isAuthenticated: true,
 					loading: false,
@@ -84,7 +84,7 @@ describe("SignupPage", () => {
 		const { container } = renderWithProviders(<SignupPage />, {
 			preloadedState: {
 				auth: {
-					user: { _id: "1", name: "Test User", email: "test@example.com" },
+					user: { id: "1", name: "Test User", email: "test@example.com" },
 					token: "fake-token",
 					isAuthenticated: true,
 					loading: false,

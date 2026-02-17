@@ -82,7 +82,7 @@ const RecipePage = () => {
 	useEffect(() => {
 		if (selectedRecipe && user && selectedRecipe.ratings) {
 			const userRatingObj = selectedRecipe.ratings.find(
-				(rating) => rating.author?._id === user._id,
+				(rating) => rating.author?.id === user.id,
 			);
 
 			if (userRatingObj && id) {
@@ -215,7 +215,7 @@ const RecipePage = () => {
 		if (userRating && userRating.recipeId === id) return userRating.value;
 		if (selectedRecipe?.ratings && user) {
 			const userRatingObj = selectedRecipe.ratings.find(
-				(rating) => rating.author?._id === user._id,
+				(rating) => rating.author?.id === user.id,
 			);
 			return userRatingObj?.value || 0;
 		}
@@ -226,7 +226,7 @@ const RecipePage = () => {
 		if (userRating && userRating.recipeId === id) return true;
 		if (selectedRecipe?.ratings && user) {
 			return selectedRecipe.ratings.some(
-				(rating) => rating.author?._id === user._id,
+				(rating) => rating.author?.id === user.id,
 			);
 		}
 		return false;
@@ -236,7 +236,7 @@ const RecipePage = () => {
 		if (userRating && userRating.recipeId === id) return userRating.value;
 		if (selectedRecipe?.ratings && user) {
 			const userRatingObj = selectedRecipe.ratings.find(
-				(rating) => rating.author?._id === user._id,
+				(rating) => rating.author?.id === user.id,
 			);
 			return userRatingObj?.value || 0;
 		}
@@ -245,7 +245,7 @@ const RecipePage = () => {
 
 	const isOwner = () => {
 		if (!isAuthenticated) return false;
-		return (selectedRecipe?.author as User)?._id === user?._id;
+		return (selectedRecipe?.author as User)?.id === user?.id;
 	};
 
 	const isRatingDisabled =
