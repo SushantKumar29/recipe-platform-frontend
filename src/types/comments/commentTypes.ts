@@ -1,45 +1,46 @@
-import type { User } from "../users/userTypes";
+import type { User } from '../users/userTypes';
 
 export interface Comment {
-	id: string;
-	content: string;
-	author: User;
-	recipe: string;
-	createdAt?: string;
-	updatedAt?: string;
+  id: string;
+  content: string;
+  author: User;
+  authorId: string;
+  recipe: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CommentResponse {
-	comments: Comment[];
-	pagination: CommentsPagination;
+  comments: Comment[];
+  pagination: CommentsPagination;
 }
 
 export interface AddCommentData {
-	content: string;
-	recipeId: string;
+  content: string;
+  recipeId: string;
 }
 
 export interface UpdateCommentData {
-	content: string;
-	commentId: string;
+  content: string;
+  commentId: string;
 }
 
 export interface DeleteCommentData {
-	commentId: string;
+  commentId: string;
 }
 
 export interface CommentQueryParams {
-	page?: number;
-	limit?: number;
-	sortBy?: "createdAt" | "updatedAt";
-	sortOrder?: "asc" | "desc";
+  page?: number;
+  limit?: number;
+  sortBy?: 'createdAt' | 'updatedAt';
+  sortOrder?: 'asc' | 'desc';
 }
 
 export interface CommentsPagination {
-	page: number;
-	totalPages: number;
-	totalComments: number;
-	hasNext: boolean;
-	hasPrev: boolean;
-	limit: number;
+  page: number;
+  totalPages: number;
+  totalComments: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+  limit: number;
 }
