@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
-import { Link } from 'react-router';
 
 import RecipesNotFound from '@/components/recipes/RecipesNotFound';
 import RecipeCard from '@/components/recipes/RecipeCard';
@@ -12,7 +11,7 @@ import Loader from '@/components/shared/Loader';
 import { fetchRecipes } from '@/slices/recipes/recipeThunks';
 import type { AppDispatch, RootState } from '@/app/store';
 import type { RecipeFilters } from '@/types/recipes/recipeTypes';
-import { Button } from '../ui/button';
+import NewRecipeButton from './NewRecipeButton';
 
 interface RecipeListProps {
   title?: string;
@@ -23,7 +22,6 @@ const RecipeList = ({ title, authorId = '' }: RecipeListProps) => {
   const dispatch = useDispatch<AppDispatch>();
 
   const { items, loading, pagination } = useSelector((state: RootState) => state.recipes);
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
 
   const [filters, setFilters] = useState<RecipeFilters>({
     search: '',
@@ -139,17 +137,7 @@ const RecipeList = ({ title, authorId = '' }: RecipeListProps) => {
       <div className="max-w-7xl mx-auto p-4 mt-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           {title && <h1 className="text-2xl font-bold text-gray-900">{title}</h1>}
-
-          {/* Keep this section in a separate shared file */}
-          <div className="flex items-center gap-4">
-            {isAuthenticated && (
-              <Link to={'/new-recipe'}>
-                <Button className="cursor-pointer  bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors">
-                  <span>New Recipe</span>
-                </Button>
-              </Link>
-            )}
-          </div>
+          <NewRecipeButton />
         </div>
 
         <div className="mb-6">

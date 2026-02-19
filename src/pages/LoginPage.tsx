@@ -1,14 +1,11 @@
-import { useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router';
 
-import { Button } from '@/components/ui/button';
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { Input } from '@/components/ui/input';
 import { loginUser } from '@/slices/auth/authThunks';
 import type { AppDispatch, RootState } from '@/app/store';
 import { useEffect } from 'react';
+import LoginForm from '@/components/auth/LoginForm';
 
 type LoginFormValues = {
   email: string;
@@ -26,13 +23,7 @@ const LoginPage = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<LoginFormValues>();
-
-  const onSubmit = async (data: LoginFormValues) => {
+  const handleLogin = async (data: LoginFormValues) => {
     try {
       await dispatch(loginUser(data)).unwrap();
       toast.success('Logged in successfully');
@@ -60,48 +51,7 @@ const LoginPage = () => {
           <p className="text-sm sm:text-base text-gray-600">Sign in to your account to continue</p>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <FieldGroup>
-            <Field>
-              <FieldLabel htmlFor="fieldgroup-email" className="text-sm sm:text-base">
-                Email
-              </FieldLabel>
-              <Input
-                id="fieldgroup-email"
-                placeholder="name@example.com"
-                type="email"
-                className="text-sm sm:text-base px-3 py-2 sm:px-4 sm:py-3"
-                {...register('email', { required: 'Email is required' })}
-              />
-              {errors.email && (
-                <p className="text-xs sm:text-sm text-red-600 mt-1">{errors.email.message}</p>
-              )}
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="fieldgroup-password" className="text-sm sm:text-base">
-                Password
-              </FieldLabel>
-              <Input
-                id="fieldgroup-password"
-                type="password"
-                className="text-sm sm:text-base px-3 py-2 sm:px-4 sm:py-3"
-                {...register('password', { required: 'Password is required' })}
-              />
-              {errors.password && (
-                <p className="text-xs sm:text-sm text-red-600 mt-1">{errors.password.message}</p>
-              )}
-            </Field>
-            <Field orientation="horizontal" className="flex-col sm:flex-row gap-2 sm:gap-3 mt-6">
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full sm:w-auto text-sm sm:text-base px-3 py-1 sm:px-4 sm:py-2"
-              >
-                {isSubmitting ? 'Logging in...' : 'Login'}
-              </Button>
-            </Field>
-          </FieldGroup>
-        </form>
+        <LoginForm onSubmit={handleLogin} />
 
         <div className="mt-6 pt-6 border-t border-gray-200 text-center">
           <p className="text-sm text-gray-600">

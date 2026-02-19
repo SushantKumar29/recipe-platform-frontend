@@ -30,7 +30,6 @@ type Camelize<T> = T extends Primitive
         }
       : T;
 
-// New type to handle the camelCase conversion without forcing lowercase
 type CamelizeKey<S extends string> = S extends `${infer P}_${infer R}`
   ? `${P}${Capitalize<CamelizeKey<R>>}`
   : S extends `${infer P}-${infer R}`

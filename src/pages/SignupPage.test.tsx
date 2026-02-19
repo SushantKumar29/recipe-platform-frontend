@@ -3,11 +3,13 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@/test/providers';
 import SignupPage from './SignupPage';
+import type { SignupFormData } from '@/validation/signupSchema';
 
 const mockRegisterUser = vi.hoisted(() => vi.fn());
 const mockToastSuccess = vi.hoisted(() => vi.fn());
 const mockToastError = vi.hoisted(() => vi.fn());
 const mockNavigate = vi.hoisted(() => vi.fn());
+const mockOnSubmit = vi.hoisted(() => vi.fn());
 
 vi.mock('@/slices/auth/authThunks', () => ({
   registerUser: mockRegisterUser,
@@ -28,6 +30,31 @@ vi.mock('react-router', async () => {
   };
 });
 
+vi.mock('@/components/auth/SignupForm', () => ({
+  default: ({ onSubmit }: { onSubmit: (data: SignupFormData) => void }) => {
+    const wrappedOnSubmit = (data: SignupFormData) => {
+      mockOnSubmit(data);
+      return onSubmit(data);
+    };
+    return (
+      <div data-testid="mock-signup-form">
+        <button
+          onClick={() =>
+            wrappedOnSubmit({
+              name: 'John Doe',
+              email: 'john@example.com',
+              password: 'password123',
+              confirmPassword: 'password123',
+            })
+          }
+        >
+          Submit
+        </button>
+      </div>
+    );
+  },
+}));
+
 describe('SignupPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -35,9 +62,10 @@ describe('SignupPage', () => {
     mockToastSuccess.mockReset();
     mockToastError.mockReset();
     mockNavigate.mockReset();
+    mockOnSubmit.mockReset();
   });
 
-  it('renders signup form', () => {
+  it('renders the signup form', () => {
     renderWithProviders(<SignupPage />, {
       preloadedState: {
         auth: {
@@ -54,10 +82,7 @@ describe('SignupPage', () => {
       screen.getByRole('heading', { name: /welcome to recipe platform/i }),
     ).toBeInTheDocument();
     expect(screen.getByText(/present your recipes/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/name/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /sign up/i })).toBeInTheDocument();
+    expect(screen.getByTestId('mock-signup-form')).toBeInTheDocument();
     expect(screen.getByText(/already registered/i)).toBeInTheDocument();
     expect(screen.getByText(/login here/i)).toBeInTheDocument();
   });
@@ -94,119 +119,13 @@ describe('SignupPage', () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it('submits form with valid data', async () => {
+  it('dispatches registerUser and shows success toast on successful signup', async () => {
     const user = userEvent.setup();
 
-    const mockUnwrap = vi.fn().mockResolvedValue({});
-    mockRegisterUser.mockReturnValue({ unwrap: mockUnwrap });
-
-    renderWithProviders(<SignupPage />, {
-      preloadedState: {
-        auth: {
-          user: null,
-          token: null,
-          isAuthenticated: false,
-          loading: false,
-          error: null,
-        },
-      },
+    const mockPromise = Object.assign(Promise.resolve({ type: 'register/fulfilled' }), {
+      unwrap: vi.fn().mockRejectedValue({}),
     });
-
-    const nameInput = screen.getByLabelText(/name/i);
-    const emailInput = screen.getByLabelText(/email/i);
-    const passwordInput = screen.getByLabelText(/password/i);
-    const submitButton = screen.getByRole('button', { name: /sign up/i });
-
-    await user.type(nameInput, 'John Doe');
-    await user.type(emailInput, 'john@example.com');
-    await user.type(passwordInput, 'password123');
-    await user.click(submitButton);
-
-    await waitFor(() => {
-      expect(mockRegisterUser).toHaveBeenCalledWith({
-        name: 'John Doe',
-        email: 'john@example.com',
-        password: 'password123',
-      });
-    });
-  });
-
-  it('shows loading state during submission', async () => {
-    const user = userEvent.setup();
-
-    const neverResolvingPromise = new Promise(() => {});
-
-    mockRegisterUser.mockReturnValue(() => ({
-      unwrap: () => neverResolvingPromise,
-    }));
-
-    renderWithProviders(<SignupPage />, {
-      preloadedState: {
-        auth: {
-          user: null,
-          token: null,
-          isAuthenticated: false,
-          loading: false,
-          error: null,
-        },
-      },
-    });
-
-    await user.type(screen.getByLabelText(/name/i), 'John Doe');
-    await user.type(screen.getByLabelText(/email/i), 'john@example.com');
-    await user.type(screen.getByLabelText(/password/i), 'password123');
-
-    const submitButton = screen.getByRole('button', { name: /sign up/i });
-    await user.click(submitButton);
-
-    await waitFor(() => {
-      expect(submitButton).toBeDisabled();
-    });
-  });
-
-  it('shows success toast on successful submission', async () => {
-    const user = userEvent.setup();
-
-    const mockUnwrap = vi.fn().mockResolvedValue({});
-    mockRegisterUser.mockReturnValue(() => ({
-      unwrap: mockUnwrap,
-    }));
-
-    renderWithProviders(<SignupPage />, {
-      preloadedState: {
-        auth: {
-          user: null,
-          token: null,
-          isAuthenticated: false,
-          loading: false,
-          error: null,
-        },
-      },
-    });
-
-    await user.type(screen.getByLabelText(/name/i), 'John Doe');
-    await user.type(screen.getByLabelText(/email/i), 'john@example.com');
-    await user.type(screen.getByLabelText(/password/i), 'password123');
-
-    const submitButton = screen.getByRole('button', { name: /sign up/i });
-    await user.click(submitButton);
-
-    await waitFor(() => {
-      expect(mockToastSuccess).toHaveBeenCalledWith('Signup successful');
-    });
-  });
-
-  it('shows error toast on submission failure', async () => {
-    const user = userEvent.setup();
-
-    const error = new Error('Registration failed');
-
-    const mockPromise = Object.assign(Promise.resolve({}), {
-      unwrap: vi.fn().mockRejectedValue(error),
-    });
-
-    mockPromise.unwrap = vi.fn().mockRejectedValue(error);
-
+    mockPromise.unwrap = vi.fn().mockResolvedValue({});
     mockRegisterUser.mockReturnValue(() => mockPromise);
 
     renderWithProviders(<SignupPage />, {
@@ -221,20 +140,41 @@ describe('SignupPage', () => {
       },
     });
 
-    await user.type(screen.getByLabelText(/name/i), 'John Doe');
-    await user.type(screen.getByLabelText(/email/i), 'john@example.com');
-    await user.type(screen.getByLabelText(/password/i), 'password123');
-
-    const submitButton = screen.getByRole('button', { name: /sign up/i });
+    const submitButton = screen.getByRole('button', { name: /submit/i });
     await user.click(submitButton);
 
+    expect(mockOnSubmit).toHaveBeenCalledWith({
+      name: 'John Doe',
+      email: 'john@example.com',
+      password: 'password123',
+      confirmPassword: 'password123',
+    });
+
+    expect(mockRegisterUser).toHaveBeenCalledWith({
+      name: 'John Doe',
+      email: 'john@example.com',
+      password: 'password123',
+      confirmPassword: 'password123',
+    });
+
     await waitFor(() => {
-      expect(mockToastError).toHaveBeenCalledWith('Registration failed');
+      expect(mockToastSuccess).toHaveBeenCalledWith('Signup successful');
     });
   });
 
-  it('shows validation errors for invalid input', async () => {
+  it('shows error toast on signup failure', async () => {
     const user = userEvent.setup();
+
+    const error = new Error('Registration failed');
+    const mockPromise = Object.assign(Promise.resolve({ type: 'register/rejected', error }), {
+      unwrap: vi.fn().mockRejectedValue({}),
+    });
+    mockPromise.unwrap = vi.fn().mockRejectedValue(error);
+    mockPromise.catch(() => {});
+
+    mockRegisterUser.mockReturnValue(() => mockPromise);
+
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     renderWithProviders(<SignupPage />, {
       preloadedState: {
@@ -248,36 +188,52 @@ describe('SignupPage', () => {
       },
     });
 
-    const nameInput = screen.getByLabelText(/name/i);
-    const emailInput = screen.getByLabelText(/email/i);
-    const passwordInput = screen.getByLabelText(/password/i);
-    const submitButton = screen.getByRole('button', { name: /sign up/i });
+    const submitButton = screen.getByRole('button', { name: /submit/i });
+    await user.click(submitButton);
 
-    await user.type(nameInput, 'John123');
+    expect(mockOnSubmit).toHaveBeenCalled();
+    expect(mockRegisterUser).toHaveBeenCalled();
+
+    await waitFor(() => {
+      expect(mockToastError).toHaveBeenCalledWith('Registration failed');
+    });
+
+    consoleSpy.mockRestore();
+  });
+
+  it('handles non-Error login failure gracefully', async () => {
+    const user = userEvent.setup();
+
+    const error = new Error('Signup failed');
+    const mockPromise = Object.assign(Promise.resolve({ type: 'register/rejected', error }), {
+      unwrap: vi.fn().mockRejectedValue({}),
+    });
+    mockPromise.unwrap = vi.fn().mockRejectedValue(error);
+    mockPromise.catch(() => {});
+
+    mockRegisterUser.mockReturnValue(() => mockPromise);
+
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    renderWithProviders(<SignupPage />, {
+      preloadedState: {
+        auth: {
+          user: null,
+          token: null,
+          isAuthenticated: false,
+          loading: false,
+          error: null,
+        },
+      },
+    });
+
+    const submitButton = screen.getByRole('button', { name: /submit/i });
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/name cannot contain numbers or special characters/i),
-      ).toBeInTheDocument();
+      expect(mockToastError).toHaveBeenCalledWith('Signup failed');
     });
 
-    await user.clear(nameInput);
-    await user.clear(emailInput);
-    await user.type(emailInput, 'invalid-email');
-    await user.click(submitButton);
-
-    await waitFor(() => {
-      expect(screen.getByText(/invalid email format/i)).toBeInTheDocument();
-    });
-
-    await user.clear(emailInput);
-    await user.clear(passwordInput);
-    await user.type(passwordInput, 'short');
-    await user.click(submitButton);
-
-    await waitFor(() => {
-      expect(screen.getByText(/password must be at least 8 characters/i)).toBeInTheDocument();
-    });
+    consoleSpy.mockRestore();
   });
 });

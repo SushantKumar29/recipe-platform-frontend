@@ -23,7 +23,9 @@ api.interceptors.response.use(
     if (err.response?.status === 401) {
       store.dispatch(logout());
     }
-    return Promise.reject(err);
+    const error = new Error(err.response?.data?.message || err.message);
+    Object.assign(error, { originalError: err });
+    return Promise.reject(error);
   },
 );
 

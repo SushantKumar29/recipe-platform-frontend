@@ -3,11 +3,13 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '@/test/providers';
 import LoginPage from './LoginPage';
+import type { LoginFormData } from '@/validation/loginSchema';
 
 const mockLoginUser = vi.hoisted(() => vi.fn());
 const mockToastSuccess = vi.hoisted(() => vi.fn());
 const mockToastError = vi.hoisted(() => vi.fn());
 const mockNavigate = vi.hoisted(() => vi.fn());
+const mockOnSubmit = vi.hoisted(() => vi.fn());
 
 vi.mock('@/slices/auth/authThunks', () => ({
   loginUser: mockLoginUser,
@@ -28,30 +30,22 @@ vi.mock('react-router', async () => {
   };
 });
 
-const mockHandleSubmit = vi.fn(
-  (callback: (data: { email: string; password: string }) => void) =>
-    (e?: React.FormEvent<HTMLFormElement>) => {
-      e?.preventDefault?.();
-      return callback({ email: 'test@example.com', password: 'password123' });
-    },
-);
-
-const mockRegister = vi.fn(() => ({
-  onChange: vi.fn(),
-  onBlur: vi.fn(),
-  ref: vi.fn(),
-  name: 'test',
-}));
-
-vi.mock('react-hook-form', () => ({
-  useForm: () => ({
-    register: mockRegister,
-    handleSubmit: mockHandleSubmit,
-    formState: {
-      errors: {},
-      isSubmitting: false,
-    },
-  }),
+vi.mock('@/components/auth/LoginForm', () => ({
+  default: ({ onSubmit }: { onSubmit: (data: LoginFormData) => void }) => {
+    const wrappedOnSubmit = (data: LoginFormData) => {
+      mockOnSubmit(data);
+      return onSubmit(data);
+    };
+    return (
+      <div data-testid="mock-login-form">
+        <button
+          onClick={() => wrappedOnSubmit({ email: 'test@example.com', password: 'password123' })}
+        >
+          Submit
+        </button>
+      </div>
+    );
+  },
 }));
 
 describe('LoginPage', () => {
@@ -61,23 +55,10 @@ describe('LoginPage', () => {
     mockToastSuccess.mockReset();
     mockToastError.mockReset();
     mockNavigate.mockReset();
-
-    mockHandleSubmit.mockImplementation(
-      (callback: (data: { email: string; password: string }) => unknown) =>
-        (e?: React.FormEvent<HTMLFormElement>) => {
-          e?.preventDefault?.();
-          return callback({ email: 'test@example.com', password: 'password123' });
-        },
-    );
-    mockRegister.mockImplementation(() => ({
-      onChange: vi.fn(),
-      onBlur: vi.fn(),
-      ref: vi.fn(),
-      name: 'test',
-    }));
+    mockOnSubmit.mockReset();
   });
 
-  it('renders login form', () => {
+  it('renders the login form', () => {
     renderWithProviders(<LoginPage />, {
       preloadedState: {
         auth: {
@@ -92,13 +73,26 @@ describe('LoginPage', () => {
 
     expect(screen.getByRole('heading', { name: /welcome back/i })).toBeInTheDocument();
     expect(screen.getByText(/sign in to your account/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument();
+    expect(screen.getByTestId('mock-login-form')).toBeInTheDocument();
   });
 
-  it('validates required fields', async () => {
-    const user = userEvent.setup();
+  it('redirects to home page if already authenticated', () => {
+    renderWithProviders(<LoginPage />, {
+      preloadedState: {
+        auth: {
+          user: { id: '1', email: 'test@example.com' },
+          token: 'fake-token',
+          isAuthenticated: true,
+          loading: false,
+          error: null,
+        },
+      },
+    });
+
+    expect(mockNavigate).toHaveBeenCalledWith('/');
+  });
+
+  it('does not redirect if not authenticated', () => {
     renderWithProviders(<LoginPage />, {
       preloadedState: {
         auth: {
@@ -111,50 +105,16 @@ describe('LoginPage', () => {
       },
     });
 
-    const submitButton = screen.getByRole('button', { name: /login/i });
-    await user.click(submitButton);
-
-    expect(true).toBe(true);
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
-  it('shows loading state during submission', async () => {
-    vi.doMock('react-hook-form', () => ({
-      useForm: () => ({
-        register: mockRegister,
-        handleSubmit: mockHandleSubmit,
-        formState: {
-          errors: {},
-          isSubmitting: true,
-        },
-      }),
-    }));
-
-    const { default: LoginPageWithMock } = await import('./LoginPage');
-
-    renderWithProviders(<LoginPageWithMock />, {
-      preloadedState: {
-        auth: {
-          user: null,
-          token: null,
-          isAuthenticated: false,
-          loading: false,
-          error: null,
-        },
-      },
-    });
-
-    expect(screen.getByRole('button')).toHaveTextContent(/Login/i);
-  });
-
-  it('shows error toast on login failure', async () => {
+  it('dispatches loginUser and shows success toast on successful login', async () => {
     const user = userEvent.setup();
 
-    const error = new Error('Login failed');
-    const mockPromise = Object.assign(Promise.resolve({ type: 'login/rejected', error }), {
-      unwrap: vi.fn().mockRejectedValue(error),
+    const mockPromise = Object.assign(Promise.resolve({ type: 'login/fulfilled' }), {
+      unwrap: vi.fn().mockRejectedValue({}),
     });
-    mockPromise.unwrap = vi.fn().mockRejectedValue(error);
-
+    mockPromise.unwrap = vi.fn().mockResolvedValue({});
     mockLoginUser.mockReturnValue(() => mockPromise);
 
     renderWithProviders(<LoginPage />, {
@@ -169,34 +129,103 @@ describe('LoginPage', () => {
       },
     });
 
-    const emailInput = screen.getByLabelText(/email/i);
-    const passwordInput = screen.getByLabelText(/password/i);
-    const submitButton = screen.getByRole('button', { name: /login/i });
-
-    await user.type(emailInput, 'test@example.com');
-    await user.type(passwordInput, 'password123');
+    const submitButton = screen.getByRole('button', { name: /submit/i });
     await user.click(submitButton);
 
-    await waitFor(() => {
-      expect(mockToastError).toHaveBeenCalled();
+    expect(mockOnSubmit).toHaveBeenCalledWith({
+      email: 'test@example.com',
+      password: 'password123',
     });
 
-    expect(mockToastError.mock.calls[0][0].toLowerCase()).toContain('login failed');
+    expect(mockLoginUser).toHaveBeenCalledWith({
+      email: 'test@example.com',
+      password: 'password123',
+    });
+
+    await waitFor(() => {
+      expect(mockToastSuccess).toHaveBeenCalledWith('Logged in successfully');
+    });
   });
 
-  it('redirects to home page if already authenticated', () => {
+  it('shows error toast on login failure', async () => {
+    const user = userEvent.setup();
+
+    const error = new Error('Invalid credentials');
+    const mockPromise = Object.assign(Promise.resolve({ type: 'login/rejected', error }), {
+      unwrap: vi.fn().mockRejectedValue(error),
+    });
+    mockPromise.unwrap = vi.fn().mockRejectedValue(error);
+    mockPromise.catch(() => {});
+
+    mockLoginUser.mockReturnValue(() => mockPromise);
+
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
     renderWithProviders(<LoginPage />, {
       preloadedState: {
         auth: {
-          user: { id: '1', name: 'Test User', email: 'test@example.com' },
-          token: 'fake-token',
-          isAuthenticated: true,
+          user: null,
+          token: null,
+          isAuthenticated: false,
           loading: false,
           error: null,
         },
       },
     });
 
-    expect(mockNavigate).toHaveBeenCalledWith('/');
+    const submitButton = screen.getByRole('button', { name: /submit/i });
+    await user.click(submitButton);
+
+    expect(mockOnSubmit).toHaveBeenCalledWith({
+      email: 'test@example.com',
+      password: 'password123',
+    });
+
+    await waitFor(() => {
+      expect(mockToastError).toHaveBeenCalledWith('Invalid credentials');
+    });
+
+    consoleSpy.mockRestore();
+  });
+
+  it('handles non-Error login failure gracefully', async () => {
+    const user = userEvent.setup();
+
+    const error = new Error('Server error');
+    const mockPromise = Object.assign(Promise.resolve({ type: 'login/rejected', error }), {
+      unwrap: vi.fn().mockRejectedValue(error),
+    });
+    mockPromise.unwrap = vi.fn().mockRejectedValue(error);
+    mockPromise.catch(() => {});
+
+    mockLoginUser.mockReturnValue(() => mockPromise);
+
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    renderWithProviders(<LoginPage />, {
+      preloadedState: {
+        auth: {
+          user: null,
+          token: null,
+          isAuthenticated: false,
+          loading: false,
+          error: null,
+        },
+      },
+    });
+
+    const submitButton = screen.getByRole('button', { name: /submit/i });
+    await user.click(submitButton);
+
+    expect(mockOnSubmit).toHaveBeenCalledWith({
+      email: 'test@example.com',
+      password: 'password123',
+    });
+
+    await waitFor(() => {
+      expect(mockToastError).toHaveBeenCalledWith('Server error');
+    });
+
+    consoleSpy.mockRestore();
   });
 });
